@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useAuth } from '@/lib/auth-context'
 import { useCart } from '@/lib/cart-context'
 import { Button } from '@/components/ui/button'
@@ -10,25 +11,44 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSub,        // Phải có cái này
+  DropdownMenuSubContent, // Phải có cái này
+  DropdownMenuSubTrigger, // Phải có cái này
 } from '@/components/ui/dropdown-menu'
+import { CategoryMenu } from "@/components/category-menu"
 
 function Header() {
   const { user, logout } = useAuth()
   const { itemCount } = useCart()
 
   return (
-    <header className="bg-white border-b border-border sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4">
+    <header className="bg-white border-b border-border sticky top-0 z-50 overflow-visible">
+      <div className="container mx-auto px-4 py-4 overflow-visible">
         <div className="flex items-center justify-between">
+          
+          <div className="flex items-center gap-8">
+            <CategoryMenu /> {/* Thêm danh mục vào đây */}
+            
+            <nav className="hidden md:flex items-center gap-8">
+              {/* Các link menu hiện tại của bạn */}
+            </nav>
+          </div>
+
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <div className="text-2xl font-bold text-foreground">
-              Alowishus
+          <Link href="/" className="flex items-center gap-2 ">
+            <div className="relative w-20 h-20"> {/* Bạn có thể điều chỉnh w (rộng) và h (cao) cho phù hợp */}
+              <Image
+                src="/trung-nguyen-logo.png"
+                alt="Trung Nguyen Legend Logo"
+                fill
+                className="object-contain"
+                priority
+              />
             </div>
           </Link>
 
           {/* Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-12">
             <Link href="/" className="text-sm font-medium hover:text-muted-foreground transition-colors">
               Cafe Menu
             </Link>
