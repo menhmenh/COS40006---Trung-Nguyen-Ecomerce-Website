@@ -11,7 +11,7 @@ import { Shield } from 'lucide-react'
 export default function AdminDashboard() {
   return (
     <div className="min-h-screen flex flex-col bg-[#F3F4F5]">
-      <Header />
+    
       
       <main className="flex-1 container mx-auto px-4 py-12">
         <div className="mb-8">

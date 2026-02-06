@@ -15,7 +15,6 @@ export default function CartPage() {
   if (items.length === 0) {
     return (
       <div className="min-h-screen">
-        <Header />
         <div className="container mx-auto px-4 py-16">
           <div className="max-w-md mx-auto text-center">
             <ShoppingBag className="h-24 w-24 mx-auto mb-6 text-muted-foreground" />
@@ -35,7 +34,6 @@ export default function CartPage() {
 
   return (
     <div className="min-h-screen">
-      <Header />
 
       <div className="container mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold mb-8">Shopping Cart</h1>

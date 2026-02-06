@@ -60,7 +60,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen">
-      <Header />
+     
 
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-md mx-auto">

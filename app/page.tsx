@@ -12,7 +12,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
-      <Header />
+   
 
     {/* Hero Section */}
       <section className="bg-muted py-12 md:py-20 overflow-hidden">
