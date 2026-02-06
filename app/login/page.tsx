@@ -2,6 +2,7 @@
 
 import React, { useState } from "react"
 import { useRouter } from 'next/navigation'
+import Link from 'next/link' // <--- Nhớ thêm import này
 import { useAuth } from '@/lib/auth-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -68,10 +69,7 @@ export default function AuthPage() {
     }
 
     setIsRegLoading(true)
-
-    // Gọi hàm register với đúng 3 tham số như code cũ của bạn
     const success = await register(regData.email, regData.password, regData.name)
-
     setIsRegLoading(false)
 
     if (success) {
@@ -93,10 +91,8 @@ export default function AuthPage() {
     <div className="min-h-screen bg-white py-16 px-4 font-sans">
       <div className="container mx-auto max-w-6xl">
         
-        {/* Layout chia đôi: Desktop 2 cột, Mobile 1 cột */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24 relative">
           
-          {/* Đường kẻ dọc phân cách (Chỉ hiện trên Desktop) */}
           <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-[1px] bg-gray-200 -translate-x-1/2"></div>
 
           {/* ================= CỘT TRÁI: LOGIN ================= */}
@@ -155,9 +151,10 @@ export default function AuthPage() {
               </div>
               
               <div>
-                <a href="#" className="text-sm text-blue-600 hover:underline">
+                {/* --- Đã cập nhật link ở đây --- */}
+                <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
                   Lost your password?
-                </a>
+                </Link>
               </div>
             </form>
           </div>
@@ -183,7 +180,6 @@ export default function AuthPage() {
                 />
               </div>
 
-              {/* Thêm trường Full Name vì hàm register() của bạn yêu cầu */}
               <div className="space-y-2">
                 <Label htmlFor="reg-name" className="text-base font-medium text-gray-700">
                   Full Name
@@ -213,7 +209,6 @@ export default function AuthPage() {
                 />
               </div>
 
-              {/* Confirm Password để đảm bảo an toàn */}
               <div className="space-y-2">
                 <Label htmlFor="reg-confirm-pass" className="text-base font-medium text-gray-700">
                   Confirm Password <span className="text-red-500">*</span>
