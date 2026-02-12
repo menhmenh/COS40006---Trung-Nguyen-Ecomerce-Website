@@ -65,7 +65,7 @@ export default function ProductsPage() {
 
   return (
     <div className="min-h-screen">
-      <Header />
+      
 
       <div className="container mx-auto px-4 py-12">
         {/* Page Header */}

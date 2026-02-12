@@ -17,7 +17,21 @@ export default function AccountPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [isLoadingOrders, setIsLoadingOrders] = useState(true)
 
+  // --- LOGIC LOGOUT ĐÃ SỬA ---
+  const handleLogout = async () => {
+    // 1. Điều hướng về trang chủ NGAY LẬP TỨC (để tạo cảm giác mượt)
+    router.push('/')
+
+    // 2. Chờ 100ms rồi mới thực sự xóa session user
+    // (Mẹo này giúp tránh việc trang Account bị render lại rồi mới chuyển trang, gây giật)
+    setTimeout(() => {
+      logout()
+    }, 100)
+  }
+  // --------------------------
+
   useEffect(() => {
+    // Bảo vệ trang: Nếu không có user thì đá về Login
     if (!isLoading && !user) {
       router.push('/login')
     }
@@ -45,10 +59,11 @@ export default function AccountPage() {
     }
   }
 
+  // Màn hình loading khi đang check user
   if (isLoading || !user) {
     return (
       <div className="min-h-screen">
-        <Header />
+      
         <div className="container mx-auto px-4 py-16 text-center">
           <p className="text-muted-foreground">Loading...</p>
         </div>
@@ -59,7 +74,7 @@ export default function AccountPage() {
 
   return (
     <div className="min-h-screen">
-      <Header />
+
 
       <div className="container mx-auto px-4 py-12">
         <div className="mb-8">
@@ -115,10 +130,12 @@ export default function AccountPage() {
                     <Button variant="outline" className="rounded-full px-6 bg-transparent">
                       EDIT PROFILE
                     </Button>
+                    
+                    {/* Button Logout đã gắn hàm mới */}
                     <Button
                       variant="outline"
-                      onClick={logout}
-                      className="rounded-full px-6 bg-transparent"
+                      onClick={handleLogout}
+                      className="rounded-full px-6 bg-transparent hover:bg-red-50 hover:text-red-600 hover:border-red-200"
                     >
                       LOG OUT
                     </Button>
