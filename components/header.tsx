@@ -62,9 +62,7 @@ function Header() {
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center gap-12">
-            <Link href="/" className="text-sm font-medium hover:text-muted-foreground transition-colors">
-              Cafe Menu
-            </Link>
+            
             <Link href="/products" className="text-sm font-medium hover:text-muted-foreground transition-colors">
               Shop Coffee
             </Link>
