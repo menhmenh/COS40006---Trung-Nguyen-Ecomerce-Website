@@ -69,9 +69,7 @@ function Header() {
             <Link href="#about" className="text-sm font-medium hover:text-muted-foreground transition-colors">
               About Us
             </Link>
-            <Link href="#contact" className="text-sm font-medium hover:text-muted-foreground transition-colors">
-              Find Us
-            </Link>
+            
           </nav>
 
           {/* Actions */}
