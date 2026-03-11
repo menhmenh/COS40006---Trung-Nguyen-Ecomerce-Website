@@ -66,7 +66,7 @@ function Header() {
             <Link href="/products" className="text-sm font-medium hover:text-muted-foreground transition-colors">
               Shop Coffee
             </Link>
-            <Link href="#about" className="text-sm font-medium hover:text-muted-foreground transition-colors">
+            <Link href="/about" className="text-sm font-medium hover:text-muted-foreground transition-colors">
               About Us
             </Link>
             
