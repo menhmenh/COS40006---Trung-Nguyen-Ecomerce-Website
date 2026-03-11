@@ -117,11 +117,6 @@ function Header() {
               </Link>
             )}
 
-            <Link href="/products">
-              <Button className="rounded-full px-6 hidden md:inline-flex">
-                BUY GIFT VOUCHERS
-              </Button>
-            </Link>
           </div>
         </div>
       </div>
