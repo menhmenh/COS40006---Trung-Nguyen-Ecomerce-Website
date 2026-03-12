@@ -27,4 +27,3 @@ jobs:
 
       - name: Build Next.js project
         run: npm run build
-// Triger CI
