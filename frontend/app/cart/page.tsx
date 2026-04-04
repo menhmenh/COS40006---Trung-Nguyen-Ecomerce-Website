@@ -1,9 +1,7 @@
 'use client'
 
-import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { useCart } from '@/lib/cart-context'
-import { products } from '@/lib/store'
 import { Button } from '@/components/ui/button'
 import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react'
 import Image from 'next/image'
@@ -34,89 +32,74 @@ export default function CartPage() {
 
   return (
     <div className="min-h-screen">
-
       <div className="container mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold mb-8">Shopping Cart</h1>
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
-            {items.map((item) => {
-              const product = products.find((p) => p.id === item.productId)
-              if (!product) return null
+            {items.map((item) => (
+              <div key={item.productId} className="bg-muted rounded-2xl p-6 flex gap-6">
+                <div className="w-24 h-24 bg-background rounded-xl relative flex-shrink-0">
+                  <Image
+                    src={item.image || '/placeholder.svg'}
+                    alt={item.productName}
+                    fill
+                    className="object-contain p-2"
+                  />
+                </div>
 
-              return (
-                <div
-                  key={item.productId}
-                  className="bg-muted rounded-2xl p-6 flex gap-6"
-                >
-                  {/* Image */}
-                  <div className="w-24 h-24 bg-background rounded-xl relative flex-shrink-0">
-                    <Image
-                      src={product.image || "/placeholder.svg"}
-                      alt={product.name}
-                      fill
-                      className="object-contain p-2"
-                    />
-                  </div>
+                <div className="flex-1">
+                  <Link href={`/products/${item.productId}`}>
+                    <h3 className="font-bold text-lg mb-1 hover:text-muted-foreground transition-colors">
+                      {item.productName}
+                    </h3>
+                  </Link>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    ${item.price.toFixed(2)} each
+                  </p>
 
-                  {/* Details */}
-                  <div className="flex-1">
-                    <Link href={`/products/${product.id}`}>
-                      <h3 className="font-bold text-lg mb-1 hover:text-muted-foreground transition-colors">
-                        {product.name}
-                      </h3>
-                    </Link>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      ${product.price.toFixed(2)} each
-                    </p>
-
-                    {/* Quantity Controls */}
-                    <div className="flex items-center gap-3">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                        className="rounded-full h-8 w-8"
-                      >
-                        <Minus className="h-3 w-3" />
-                      </Button>
-                      <span className="font-medium w-8 text-center">{item.quantity}</span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                        className="rounded-full h-8 w-8"
-                      >
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeItem(item.productId)}
-                        className="ml-auto text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Price */}
-                  <div className="text-right">
-                    <div className="font-bold text-xl">
-                      ${(product.price * item.quantity).toFixed(2)}
-                    </div>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                      className="rounded-full h-8 w-8"
+                    >
+                      <Minus className="h-3 w-3" />
+                    </Button>
+                    <span className="font-medium w-8 text-center">{item.quantity}</span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                      className="rounded-full h-8 w-8"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeItem(item.productId)}
+                      className="ml-auto text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
-              )
-            })}
+
+                <div className="text-right">
+                  <div className="font-bold text-xl">
+                    ${(item.price * item.quantity).toFixed(2)}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
 
-          {/* Order Summary */}
           <div>
             <div className="bg-muted rounded-2xl p-6 sticky top-24">
               <h2 className="text-2xl font-bold mb-6">Order Summary</h2>
-              
+
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Subtotal</span>

@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import Image from 'next/image'
+
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import type { Product } from '@/lib/store'
+import type { Product } from '@/lib/types'
 
 interface ProductCardProps {
   product: Product
@@ -14,7 +15,7 @@ export function ProductCard({ product }: ProductCardProps) {
       <Link href={`/products/${product.id}`}>
         <div className="aspect-square bg-muted relative overflow-hidden">
           <Image
-            src={product.image || "/placeholder.svg"}
+            src={product.image || '/placeholder.svg'}
             alt={product.name}
             fill
             className="object-contain p-8"

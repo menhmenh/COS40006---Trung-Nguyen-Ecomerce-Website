@@ -1,10 +1,9 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { Header } from '@/components/header'
+import { useEffect, useMemo, useState } from 'react'
+
 import { Footer } from '@/components/footer'
 import { ProductCard } from '@/components/product-card'
-import { products, categories } from '@/lib/store'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
@@ -16,28 +15,56 @@ import {
 } from '@/components/ui/select'
 import { Search } from 'lucide-react'
 
+import type { Category, Product } from '@/lib/types'
+
 export default function ProductsPage() {
+  const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [sortBy, setSortBy] = useState('featured')
 
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [productsRes, categoriesRes] = await Promise.all([
+          fetch('/api/products'),
+          fetch('/api/categories'),
+        ])
+
+        const [productsData, categoriesData] = await Promise.all([
+          productsRes.json(),
+          categoriesRes.json(),
+        ])
+
+        setProducts(Array.isArray(productsData) ? productsData : [])
+        setCategories(Array.isArray(categoriesData) ? categoriesData : [])
+      } catch (error) {
+        console.error('Failed to load products page data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadData()
+  }, [])
+
   const filteredProducts = useMemo(() => {
     let result = [...products]
 
-    // Filter by search
     if (searchQuery) {
-      result = result.filter((product) =>
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchQuery.toLowerCase())
+      result = result.filter(
+        (product) =>
+          product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          product.description.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     }
 
-    // Filter by category
     if (selectedCategory !== 'all') {
       result = result.filter((product) => product.category === selectedCategory)
     }
 
-    // Sort
     switch (sortBy) {
       case 'price-low':
         result.sort((a, b) => a.price - b.price)
@@ -52,7 +79,6 @@ export default function ProductsPage() {
         result.sort((a, b) => b.rating - a.rating)
         break
       default:
-        // Featured - products with badges first
         result.sort((a, b) => {
           if (a.badge && !b.badge) return -1
           if (!a.badge && b.badge) return 1
@@ -61,14 +87,11 @@ export default function ProductsPage() {
     }
 
     return result
-  }, [searchQuery, selectedCategory, sortBy])
+  }, [products, searchQuery, selectedCategory, sortBy])
 
   return (
     <div className="min-h-screen">
-      
-
       <div className="container mx-auto px-4 py-12">
-        {/* Page Header */}
         <div className="mb-12 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 text-balance">
             Shop Our Coffee
@@ -78,9 +101,7 @@ export default function ProductsPage() {
           </p>
         </div>
 
-        {/* Filters */}
         <div className="mb-8 space-y-4">
-          {/* Search */}
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -92,7 +113,6 @@ export default function ProductsPage() {
             />
           </div>
 
-          {/* Category Filters */}
           <div className="flex flex-wrap gap-2">
             <Button
               variant={selectedCategory === 'all' ? 'default' : 'outline'}
@@ -113,7 +133,6 @@ export default function ProductsPage() {
             ))}
           </div>
 
-          {/* Sort */}
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">Sort by:</span>
             <Select value={sortBy} onValueChange={setSortBy}>
@@ -131,26 +150,33 @@ export default function ProductsPage() {
           </div>
         </div>
 
-        {/* Results */}
-        <div className="mb-6">
-          <p className="text-sm text-muted-foreground">
-            Showing {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
-          </p>
-        </div>
-
-        {/* Products Grid */}
-        {filteredProducts.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+        {loading ? (
+          <div className="py-16 text-center text-muted-foreground">
+            Loading products...
           </div>
         ) : (
-          <div className="text-center py-16">
-            <p className="text-muted-foreground text-lg">
-              No products found. Try adjusting your filters.
-            </p>
-          </div>
+          <>
+            <div className="mb-6">
+              <p className="text-sm text-muted-foreground">
+                Showing {filteredProducts.length}{' '}
+                {filteredProducts.length === 1 ? 'product' : 'products'}
+              </p>
+            </div>
+
+            {filteredProducts.length > 0 ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {filteredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <p className="text-muted-foreground text-lg">
+                  No products found. Try adjusting your filters.
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
 
