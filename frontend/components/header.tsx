@@ -2,33 +2,30 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation' // 1. Import router
+import { useRouter } from 'next/navigation' 
 import { useAuth } from '@/lib/auth-context'
 import { useCart } from '@/lib/cart-context'
 import { Button } from '@/components/ui/button'
-import { ShoppingCart, User, LogOut } from 'lucide-react'
+import { ShoppingCart, User, LogOut, LayoutDashboard } from 'lucide-react' 
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu'
 import { CategoryMenu } from "@/components/category-menu"
 
 function Header() {
-  const router = useRouter() // 2. Khai báo router
+  const router = useRouter() 
   const { user, logout } = useAuth()
   const { itemCount } = useCart()
 
-  // 3. Hàm xử lý Logout: Về trang chủ trước -> Xóa user sau
+  
+  const isAdmin = user?.role === 'admin'
+
   const handleLogout = () => {
-    router.push('/') // Chuyển hướng ngay lập tức
+    router.push('/') 
     
-    // Delay nhẹ 100ms để đảm bảo UI chuyển xong mới xóa data user
-    // (Giúp tránh lỗi redirect vòng lặp hoặc giật màn hình)
     setTimeout(() => {
       logout()
     }, 100)
@@ -41,10 +38,6 @@ function Header() {
           
           <div className="flex items-center gap-8">
             <CategoryMenu />
-            
-            <nav className="hidden md:flex items-center gap-8">
-              {/* Các link menu hiện tại của bạn */}
-            </nav>
           </div>
 
           {/* Logo */}
@@ -62,28 +55,44 @@ function Header() {
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center gap-12">
-            
-            <Link href="/products" className="text-sm font-medium hover:text-muted-foreground transition-colors">
-              Shop Coffee
-            </Link>
-            <Link href="/about" className="text-sm font-medium hover:text-muted-foreground transition-colors">
-              About Us
-            </Link>
-            
+            {!isAdmin && (
+              <>
+                <Link href="/products" className="text-sm font-medium hover:text-muted-foreground transition-colors">
+                  Shop Coffee
+                </Link>
+                <Link href="/about" className="text-sm font-medium hover:text-muted-foreground transition-colors">
+                  About Us
+                </Link>
+              </>
+            )}
           </nav>
 
           {/* Actions */}
           <div className="flex items-center gap-4">
-            <Link href="/cart">
-              <Button variant="ghost" size="icon" className="relative">
-                <ShoppingCart className="h-5 w-5" />
-                {itemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {itemCount}
-                  </span>
-                )}
-              </Button>
-            </Link>
+            
+            
+            {isAdmin && (
+              <Link href="/admin">
+                <Button variant="default" className="gap-2">
+                  <LayoutDashboard className="h-4 w-4" />
+                  Admin Dashboard
+                </Button>
+              </Link>
+            )}
+
+            
+            {!isAdmin && (
+              <Link href="/cart">
+                <Button variant="ghost" size="icon" className="relative">
+                  <ShoppingCart className="h-5 w-5" />
+                  {itemCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {itemCount}
+                    </span>
+                  )}
+                </Button>
+              </Link>
+            )}
 
             {user ? (
               <DropdownMenu>
@@ -97,12 +106,6 @@ function Header() {
                     <Link href="/account">My Account</Link>
                   </DropdownMenuItem>
                   
-                  {/* Chỉ hiện Admin Dashboard nếu cần thiết, có thể thêm điều kiện user.role ở đây */}
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin">Admin Dashboard</Link>
-                  </DropdownMenuItem>
-                  
-                  {/* 4. Gọi hàm handleLogout thay vì logout trực tiếp */}
                   <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 focus:text-red-600">
                     <LogOut className="mr-2 h-4 w-4" />
                     Logout

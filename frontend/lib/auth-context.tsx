@@ -2,10 +2,12 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 
+
 interface User {
   id: string
   email: string
   name: string
+  role?: string 
 }
 
 interface AuthContextType {
@@ -41,6 +43,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (response.ok) {
         const userData = await response.json()
+        
+        
+        if (userData.email === 'admin@alowishus.com') {
+          userData.role = 'admin'
+        } else {
+          userData.role = 'user'
+        }
+      
+
         setUser(userData)
         localStorage.setItem('user', JSON.stringify(userData))
         return true
@@ -62,6 +73,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (response.ok) {
         const userData = await response.json()
+        
+        
+        if (userData.email === 'admin@alowishus.com') {
+          userData.role = 'admin'
+        } else {
+          userData.role = 'user'
+        }
+        
+
         setUser(userData)
         localStorage.setItem('user', JSON.stringify(userData))
         return true
