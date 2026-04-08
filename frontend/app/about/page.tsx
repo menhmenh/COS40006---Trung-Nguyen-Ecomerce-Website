@@ -189,7 +189,7 @@ export default function AboutPage() {
                 className="w-full md:w-5/12 px-4 md:px-12 py-4 transition-all duration-700 ease-out opacity-0 translate-y-20"
                 style={{ transitionDelay: `${500}ms` }}
               >
-                <div className="relative h-[300px] md:h-[350px] w-full grayscale hover:grayscale-0 transition-all duration-700">
+                <div className="relative h-75 md:h-87.5 w-full grayscale hover:grayscale-0 transition-all duration-700">
                   <Image 
                     src={item.image} 
                     alt={item.year}
