@@ -4,8 +4,6 @@ import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Header } from '@/components/header'
-import { Footer } from '@/components/footer'
 import { ProductCard } from '@/components/product-card'
 import { products } from '@/lib/store'
 import { useCart } from '@/lib/cart-context'
@@ -24,15 +22,11 @@ export default function ProductDetailPage() {
 
   if (!product) {
     return (
-      <div className="min-h-screen">
-        <Header />
-        <div className="container mx-auto px-4 py-16 text-center">
-          <h1 className="text-2xl font-bold mb-4">Product not found</h1>
-          <Link href="/products">
-            <Button>Back to Products</Button>
-          </Link>
-        </div>
-        <Footer />
+      <div className="container mx-auto px-4 py-16 text-center">
+        <h1 className="text-2xl font-bold mb-4">Product not found</h1>
+        <Link href="/products">
+          <Button>Back to Products</Button>
+        </Link>
       </div>
     )
   }
@@ -50,17 +44,14 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <div className="min-h-screen">
-      <Header />
-
-      <div className="container mx-auto px-4 py-12">
-        {/* Back Button */}
-        <Link href="/products">
-          <Button variant="ghost" className="mb-8">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Products
-          </Button>
-        </Link>
+    <div className="container mx-auto px-4 py-12">
+      {/* Back Button */}
+      <Link href="/products">
+        <Button variant="ghost" className="mb-8">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Products
+        </Button>
+      </Link>
 
         {/* Product Details */}
         <div className="grid md:grid-cols-2 gap-12 mb-16">
@@ -179,9 +170,6 @@ export default function ProductDetailPage() {
             </div>
           </div>
         )}
-      </div>
-
-      <Footer />
     </div>
   )
 }
