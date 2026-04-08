@@ -52,7 +52,7 @@ export default function Home() {
             </div>
 
             {/* Image Section với hiệu ứng đổ bóng nhẹ */}
-            <div className="relative h-112.5 md:h-150 flex items-center justify-center">
+            <div className="relative h-[450px] md:h-[600px] flex items-center justify-center">
               <div className="absolute inset-0 bg-[#C5A059]/5 rounded-full blur-3xl" /> {/* Ánh sáng vàng nhẹ phía sau ảnh */}
               <Image
                 src="/ca-phe-phin-loc-giay-trung-nguyen.png" 
@@ -135,7 +135,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             {/* Hình ảnh sản phẩm đặc trưng */}
-            <div className="relative h-112.5 group">
+            <div className="relative h-[450px] group">
               <div className="absolute inset-0 bg-[#C5A059]/10 rounded-full blur-3xl group-hover:bg-[#C5A059]/20 transition-colors duration-500" />
               <Image
                 src="/trung-nguyen-store.png"  
@@ -233,7 +233,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="relative h-112.5 order-1 md:order-2">
+            <div className="relative h-[450px] order-1 md:order-2">
               {/* Hiệu ứng trang trí phía sau sản phẩm */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[#C5A059]/5 rounded-full blur-3xl" />
               <Image
@@ -255,7 +255,7 @@ export default function Home() {
             <div className="grid grid-cols-2 gap-4">
               <div className="aspect-square bg-[#3E2723] rounded-none overflow-hidden relative shadow-2xl">
                 <Image
-                  src="/testimonial-1.jpg" // Thay bằng ảnh không gian quán hoặc khách hàng sang trọng
+                  src="/images/testimonial-1.jpg" // Thay bằng ảnh không gian quán hoặc khách hàng sang trọng
                   alt="Legendary Experience"
                   fill
                   className="object-cover opacity-80 hover:opacity-100 transition-opacity"
@@ -263,7 +263,7 @@ export default function Home() {
               </div>
               <div className="aspect-square bg-[#C5A059] rounded-none overflow-hidden relative shadow-2xl mt-8">
                 <Image
-                  src="/testimonial-2.jpg" // Thay bằng ảnh không gian quán hoặc khách hàng sang trọng
+                  src="/images/testimonial-2.png" 
                   alt="Coffee Moments"
                   fill
                   className="object-cover opacity-80 hover:opacity-100 transition-opacity"
