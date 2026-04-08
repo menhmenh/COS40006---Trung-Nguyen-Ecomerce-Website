@@ -32,16 +32,16 @@ function Header() {
   }
 
   return (
-    <header className="bg-white border-b border-border sticky top-0 z-50 overflow-visible">
+    <header className="bg-white border-b border-border sticky top-0 z-50 overflow-visible animate-fade-in-down">
       <div className="container mx-auto px-4 py-4 overflow-visible">
         <div className="flex items-center justify-between">
           
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-8 animate-fade-in-left">
             <CategoryMenu />
           </div>
 
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 ">
+          <Link href="/" className="flex items-center gap-2 hover:scale-105 transition-transform">
             <div className="relative w-20 h-20">
               <Image
                 src="/trung-nguyen-logo.png"
@@ -57,10 +57,10 @@ function Header() {
           <nav className="hidden md:flex items-center gap-12">
             {!isAdmin && (
               <>
-                <Link href="/products" className="text-sm font-medium hover:text-muted-foreground transition-colors">
+                <Link href="/products" className="text-sm font-medium hover:text-muted-foreground transition-smooth">
                   Shop Coffee
                 </Link>
-                <Link href="/about" className="text-sm font-medium hover:text-muted-foreground transition-colors">
+                <Link href="/about" className="text-sm font-medium hover:text-muted-foreground transition-smooth">
                   About Us
                 </Link>
               </>
@@ -68,7 +68,7 @@ function Header() {
           </nav>
 
           {/* Actions */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 animate-fade-in-right">
             
             
             {isAdmin && (

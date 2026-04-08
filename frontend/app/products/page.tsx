@@ -69,17 +69,17 @@ export default function ProductsPage() {
 
       <div className="container mx-auto px-4 py-12">
         {/* Page Header */}
-        <div className="mb-12 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-balance">
+        <div className="mb-12 text-center animate-fade-in-up">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-balance animate-fade-in">
             Shop Our Coffee
           </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed animate-fade-in-up">
             Explore our delicious range of coffee and beverages
           </p>
         </div>
 
         {/* Filters */}
-        <div className="mb-8 space-y-4">
+        <div className="mb-8 space-y-4 animate-fade-in-up" style={{animationDelay: '0.1s'}}>
           {/* Search */}
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -88,7 +88,7 @@ export default function ProductsPage() {
               placeholder="Search coffee..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 transition-smooth focus:shadow-md"
             />
           </div>
 
@@ -97,7 +97,7 @@ export default function ProductsPage() {
             <Button
               variant={selectedCategory === 'all' ? 'default' : 'outline'}
               onClick={() => setSelectedCategory('all')}
-              className="rounded-full"
+              className="rounded-full transition-smooth hover:shadow-md"
             >
               All
             </Button>
@@ -106,7 +106,7 @@ export default function ProductsPage() {
                 key={category.id}
                 variant={selectedCategory === category.slug ? 'default' : 'outline'}
                 onClick={() => setSelectedCategory(category.slug)}
-                className="rounded-full"
+                className="rounded-full transition-smooth hover:shadow-md"
               >
                 {category.name}
               </Button>
@@ -117,7 +117,7 @@ export default function ProductsPage() {
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">Sort by:</span>
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-48 transition-smooth">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -132,7 +132,7 @@ export default function ProductsPage() {
         </div>
 
         {/* Results */}
-        <div className="mb-6">
+        <div className="mb-6 animate-fade-in-up" style={{animationDelay: '0.2s'}}>
           <p className="text-sm text-muted-foreground">
             Showing {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
           </p>
@@ -141,12 +141,14 @@ export default function ProductsPage() {
         {/* Products Grid */}
         {filteredProducts.length > 0 ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+            {filteredProducts.map((product, index) => (
+              <div key={product.id} style={{animationDelay: `${index * 0.05}s`}} className="animate-fade-in-up">
+                <ProductCard product={product} />
+              </div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-16">
+          <div className="text-center py-16 animate-fade-in">
             <p className="text-muted-foreground text-lg">
               No products found. Try adjusting your filters.
             </p>

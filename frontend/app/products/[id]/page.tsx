@@ -47,7 +47,7 @@ export default function ProductDetailPage() {
     <div className="container mx-auto px-4 py-12">
       {/* Back Button */}
       <Link href="/products">
-        <Button variant="ghost" className="mb-8">
+        <Button variant="ghost" className="mb-8 transition-smooth hover:scale-105 animate-fade-in-left">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Products
         </Button>
@@ -56,7 +56,7 @@ export default function ProductDetailPage() {
         {/* Product Details */}
         <div className="grid md:grid-cols-2 gap-12 mb-16">
           {/* Image */}
-          <div className="bg-muted rounded-2xl p-12 relative aspect-square">
+          <div className="bg-muted rounded-2xl p-12 relative aspect-square animate-fade-in-left">
             <Image
               src={product.image || "/placeholder.svg"}
               alt={product.name}
@@ -71,16 +71,16 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Info */}
-          <div>
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">{product.name}</h1>
+          <div className="animate-fade-in-right">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 animate-fade-in">{product.name}</h1>
             
             {/* Rating */}
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center gap-3 mb-6 animate-fade-in-up" style={{animationDelay: '0.1s'}}>
               <div className="flex">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
                     key={star}
-                    className={`h-5 w-5 ${
+                    className={`h-5 w-5 transition-transform hover:scale-125 ${
                       star <= Math.floor(product.rating)
                         ? 'fill-foreground text-foreground'
                         : 'text-muted-foreground'
@@ -94,22 +94,22 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Price */}
-            <div className="text-5xl font-bold mb-6">${product.price.toFixed(2)}</div>
+            <div className="text-5xl font-bold mb-6 animate-fade-in-up" style={{animationDelay: '0.15s'}}>${product.price.toFixed(2)}</div>
 
             {/* Description */}
-            <p className="text-muted-foreground mb-8 leading-relaxed">
+            <p className="text-muted-foreground mb-8 leading-relaxed animate-fade-in-up" style={{animationDelay: '0.2s'}}>
               {product.description}
             </p>
 
             {/* Quantity */}
-            <div className="mb-8">
+            <div className="mb-8 animate-fade-in-up" style={{animationDelay: '0.25s'}}>
               <label className="text-sm font-medium mb-3 block">Quantity</label>
               <div className="flex items-center gap-3">
                 <Button
                   variant="outline"
                   size="icon"
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="rounded-full"
+                  className="rounded-full transition-smooth hover:scale-110"
                 >
                   <Minus className="h-4 w-4" />
                 </Button>
@@ -118,7 +118,7 @@ export default function ProductDetailPage() {
                   variant="outline"
                   size="icon"
                   onClick={() => setQuantity(quantity + 1)}
-                  className="rounded-full"
+                  className="rounded-full transition-smooth hover:scale-110"
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
@@ -126,10 +126,10 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Add to Cart */}
-            <div className="flex gap-4">
+            <div className="flex gap-4 animate-fade-in-up" style={{animationDelay: '0.3s'}}>
               <Button
                 onClick={handleAddToCart}
-                className="flex-1 rounded-full py-6 text-lg"
+                className="flex-1 rounded-full py-6 text-lg transition-smooth hover:shadow-lg hover:scale-105 active:scale-95"
               >
                 ADD TO CART
               </Button>
@@ -139,19 +139,19 @@ export default function ProductDetailPage() {
                   router.push('/cart')
                 }}
                 variant="outline"
-                className="rounded-full px-8"
+                className="rounded-full px-8 transition-smooth hover:shadow-lg hover:scale-105"
               >
                 BUY NOW
               </Button>
             </div>
 
             {/* Product Info */}
-            <div className="mt-8 space-y-3 border-t border-border pt-8">
-              <div className="flex justify-between text-sm">
+            <div className="mt-8 space-y-3 border-t border-border pt-8 animate-fade-in-up" style={{animationDelay: '0.35s'}}>
+              <div className="flex justify-between text-sm transition-smooth hover:bg-muted p-2 rounded">
                 <span className="text-muted-foreground">Category</span>
                 <span className="font-medium capitalize">{product.category.replace('-', ' ')}</span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-sm transition-smooth hover:bg-muted p-2 rounded">
                 <span className="text-muted-foreground">Availability</span>
                 <span className="font-medium text-green-600">In Stock</span>
               </div>
@@ -161,11 +161,13 @@ export default function ProductDetailPage() {
 
         {/* Related Products */}
         {relatedProducts.length > 0 && (
-          <div>
-            <h2 className="text-3xl font-bold mb-8">You May Also Like</h2>
+          <div className="animate-fade-in-up" style={{animationDelay: '0.4s'}}>
+            <h2 className="text-3xl font-bold mb-8 animate-fade-in">You May Also Like</h2>
             <div className="grid md:grid-cols-3 gap-8">
-              {relatedProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+              {relatedProducts.map((product, index) => (
+                <div key={product.id} style={{animationDelay: `${0.4 + index * 0.05}s`}} className="animate-fade-in-up">
+                  <ProductCard product={product} />
+                </div>
               ))}
             </div>
           </div>
