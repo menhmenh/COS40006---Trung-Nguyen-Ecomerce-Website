@@ -60,7 +60,7 @@ export default function CheckoutPage() {
         <div className="container mx-auto px-4 py-16 text-center">
           <h1 className="text-3xl font-bold mb-4">Giỏ hàng của bạn trống</h1>
           <Link href="/products">
-            <Button className="rounded-full px-8">MUA CÀ PHÊ</Button>
+            <Button className="rounded-full px-8">BUY COFFEE</Button>
           </Link>
         </div>
         <Footer />
