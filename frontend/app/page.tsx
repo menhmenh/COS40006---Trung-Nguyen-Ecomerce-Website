@@ -17,7 +17,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
-   
+      <Header />
 
     {/* Hero Section */}
       <section className="bg-muted py-12 md:py-20 overflow-hidden">
@@ -260,7 +260,7 @@ export default function Home() {
             <div className="grid grid-cols-2 gap-4">
               <div className="aspect-square bg-[#3E2723] rounded-none overflow-hidden relative shadow-2xl">
                 <Image
-                  src="/images/testimonial-1.jpg" // Thay bằng ảnh không gian quán hoặc khách hàng sang trọng
+                  src="/images/testimonial-1.jpg"
                   alt="Legendary Experience"
                   fill
                   className="object-cover opacity-80 hover:opacity-100 transition-opacity"
@@ -268,7 +268,7 @@ export default function Home() {
               </div>
               <div className="aspect-square bg-[#C5A059] rounded-none overflow-hidden relative shadow-2xl mt-8">
                 <Image
-                  src="/images/testimonial-2.png" 
+                  src="/images/testimonial-2.jpg" 
                   alt="Coffee Moments"
                   fill
                   className="object-cover opacity-80 hover:opacity-100 transition-opacity"
