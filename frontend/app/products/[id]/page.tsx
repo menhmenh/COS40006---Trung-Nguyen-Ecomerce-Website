@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -9,18 +9,28 @@ import { Footer } from '@/components/footer'
 import { ProductCard } from '@/components/product-card'
 import { products } from '@/lib/store'
 import { useCart } from '@/lib/cart-context'
+import { useAuth } from '@/lib/auth-context'
 import { Button } from '@/components/ui/button'
 import { Star, Minus, Plus, ArrowLeft } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { trackProductView, trackAddToCart } from '@/lib/recommendations'
 
 export default function ProductDetailPage() {
   const params = useParams()
   const router = useRouter()
   const { addItem } = useCart()
+  const { user } = useAuth()
   const { toast } = useToast()
   const [quantity, setQuantity] = useState(1)
 
   const product = products.find((p) => p.id === params.id)
+
+  // Track product view on component mount
+  useEffect(() => {
+    if (user?.id && product?.id) {
+      trackProductView(user.id, product.id, product.category)
+    }
+  }, [user?.id, product?.id, product?.category])
 
   if (!product) {
     return (
@@ -43,6 +53,12 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = () => {
     addItem(product.id, quantity)
+    
+    // Track add to cart interaction
+    if (user?.id) {
+      trackAddToCart(user.id, product.id, product.category)
+    }
+    
     toast({
       title: 'Added to cart',
       description: `${quantity} × ${product.name} added to your cart`,

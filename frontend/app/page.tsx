@@ -1,13 +1,18 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { ProductCard } from '@/components/product-card'
+import { RecommendedProducts } from '@/components/recommended-products'
+import { useAuth } from '@/lib/auth-context'
 import { products } from '@/lib/store'
 import { Star, Utensils, Coffee, IceCream, ChevronLeft, ChevronRight } from 'lucide-react'
 
 export default function Home() {
+  const { user } = useAuth()
   const bestSellers = products.filter((p) => p.badge).slice(0, 3)
 
   return (
@@ -327,6 +332,15 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* FR13: Recommended for You Section */}
+      {user?.id && (
+        <section className="py-16 md:py-24 bg-muted">
+          <div className="container mx-auto px-4">
+            <RecommendedProducts userId={user.id} limit={8} />
+          </div>
+        </section>
+      )}
 
       <Footer />
     </div>
