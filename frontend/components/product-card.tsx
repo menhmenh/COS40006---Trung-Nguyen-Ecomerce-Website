@@ -17,7 +17,7 @@ export function ProductCard({ product }: ProductCardProps) {
             src={product.image || "/placeholder.svg"}
             alt={product.name}
             fill
-            className="object-contain p-8"
+            className="object-cover"
           />
           {product.badge && (
             <div className="absolute top-4 left-4 bg-primary text-primary-foreground text-xs font-medium px-3 py-1 rounded-full">
@@ -36,10 +36,9 @@ export function ProductCard({ product }: ProductCardProps) {
           {product.description}
         </p>
         <div className="flex items-center justify-between">
-          <span className="text-2xl font-bold">${product.price.toFixed(2)}</span>
-          <Link href={`/products/${product.id}`}>
-            <Button className="rounded-full px-6">ORDER NOW</Button>
-          </Link>
+          <span className="text-2xl font-bold text-primary">
+            {product.price.toLocaleString('vi-VN')}đ
+          </span>
         </div>
       </div>
     </Card>

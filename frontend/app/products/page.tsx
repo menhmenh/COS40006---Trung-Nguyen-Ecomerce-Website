@@ -1,12 +1,13 @@
+
 'use client'
 
 import { useState, useMemo } from 'react'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { ProductCard } from '@/components/product-card'
+import { CategorySidebar } from '@/components/category-sidebar'
 import { products, categories } from '@/lib/store'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
@@ -32,7 +33,7 @@ export default function ProductsPage() {
       )
     }
 
-    // Filter by category
+    // Filter by category (check both parent and child categories)
     if (selectedCategory !== 'all') {
       result = result.filter((product) => product.category === selectedCategory)
     }
@@ -64,94 +65,84 @@ export default function ProductsPage() {
   }, [searchQuery, selectedCategory, sortBy])
 
   return (
-    <div className="min-h-screen">
-      
+    <div className="min-h-screen flex flex-col">
+      <Header />
 
-      <div className="container mx-auto px-4 py-12">
-        {/* Page Header */}
-        <div className="mb-12 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-balance">
-            Shop Our Coffee
-          </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Explore our delicious range of coffee and beverages
-          </p>
+      {/* Page Header */}
+      <div className="bg-primary text-primary-foreground py-6 px-4">
+        <div className="container mx-auto">
+          <h1 className="text-2xl md:text-3xl font-bold">CÀ PHÊ HÒA TAN</h1>
         </div>
+      </div>
 
-        {/* Filters */}
-        <div className="mb-8 space-y-4">
-          {/* Search */}
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search coffee..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+      <div className="flex-1">
+        <div className="container mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            {/* Sidebar */}
+            <div className="md:col-span-1">
+              {/* Search */}
+              <div className="mb-6">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Tìm kiếm..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
 
-          {/* Category Filters */}
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant={selectedCategory === 'all' ? 'default' : 'outline'}
-              onClick={() => setSelectedCategory('all')}
-              className="rounded-full"
-            >
-              All
-            </Button>
-            {categories.map((category) => (
-              <Button
-                key={category.id}
-                variant={selectedCategory === category.slug ? 'default' : 'outline'}
-                onClick={() => setSelectedCategory(category.slug)}
-                className="rounded-full"
-              >
-                {category.name}
-              </Button>
-            ))}
-          </div>
+              {/* Categories */}
+              <div className="border border-border rounded-lg overflow-hidden">
+                <div className="bg-muted px-4 py-3 font-medium text-sm">DANH MỤC</div>
+                <CategorySidebar
+                  categories={categories}
+                  selectedCategory={selectedCategory}
+                  onSelectCategory={setSelectedCategory}
+                />
+              </div>
+            </div>
 
-          {/* Sort */}
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">Sort by:</span>
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="featured">Featured</SelectItem>
-                <SelectItem value="price-low">Price: Low to High</SelectItem>
-                <SelectItem value="price-high">Price: High to Low</SelectItem>
-                <SelectItem value="name">Name: A to Z</SelectItem>
-                <SelectItem value="rating">Rating: High to Low</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* Main Content */}
+            <div className="md:col-span-3">
+              {/* Top Bar */}
+              <div className="flex justify-between items-center mb-6">
+                <p className="text-sm text-muted-foreground">
+                  Hiển thị {filteredProducts.length} sản phẩm
+                </p>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="featured">Nổi bật</SelectItem>
+                    <SelectItem value="price-low">Giá: Thấp đến Cao</SelectItem>
+                    <SelectItem value="price-high">Giá: Cao đến Thấp</SelectItem>
+                    <SelectItem value="name">Tên: A đến Z</SelectItem>
+                    <SelectItem value="rating">Đánh giá: Cao đến Thấp</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Products Grid */}
+              {filteredProducts.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                  {filteredProducts.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-16">
+                  <p className="text-muted-foreground text-lg">
+                    Không tìm thấy sản phẩm. Hãy thử lại với bộ lọc khác.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-
-        {/* Results */}
-        <div className="mb-6">
-          <p className="text-sm text-muted-foreground">
-            Showing {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
-          </p>
-        </div>
-
-        {/* Products Grid */}
-        {filteredProducts.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-16">
-            <p className="text-muted-foreground text-lg">
-              No products found. Try adjusting your filters.
-            </p>
-          </div>
-        )}
       </div>
 
       <Footer />
