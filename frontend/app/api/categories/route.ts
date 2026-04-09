@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 
-const DB_HOST = process.env.DB_HOST;
-const DB_USER = process.env.DB_USER;
-const DB_PASSWORD = process.env.DB_PASSWORD;
-const DB_NAME = process.env.DB_NAME;
+const DB_HOST = process.env.DB_HOST || 'tncoffee-sql-01.database.windows.net';
+const DB_USER = process.env.DB_USER || 'trungnguyen@tncoffee-sql-01';
+const DB_PASSWORD = process.env.DB_PASSWORD || 'tnswe40006@';
+const DB_NAME = process.env.DB_NAME || 'tncoffee-db';
 
 export async function GET() {
   try {
