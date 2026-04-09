@@ -2,6 +2,8 @@
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { Header } from "@/components/header"
+import { Footer } from "@/components/footer"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAuth } from "@/lib/auth-context"
 
@@ -24,11 +26,13 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
+    <>
+      <Header />
+      <div className="container mx-auto px-4 py-12">
 
-      <h1 className="text-4xl font-bold mb-8">
-        My Account
-      </h1>
+        <h1 className="text-4xl font-bold mb-8">
+          My Account
+        </h1>
 
       <Tabs defaultValue="profile">
 
@@ -45,8 +49,10 @@ export default function AccountPage() {
           <OrderHistoryTab userId={user.id}/>
         </TabsContent>
 
-      </Tabs>
+        </Tabs>
 
-    </div>
+      </div>
+      <Footer />
+    </>
   )
 }
