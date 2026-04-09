@@ -23,8 +23,12 @@ export async function trackProductInteraction(payload: InteractionPayload): Prom
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      console.error('Failed to track interaction:', error);
+      try {
+        const error = await response.json();
+        console.error(`Failed to track interaction: HTTP ${response.status}`, error);
+      } catch (parseError) {
+        console.error(`Failed to track interaction: HTTP ${response.status} (could not parse response)`);
+      }
     }
   } catch (error) {
     console.error('Error tracking product interaction:', error);

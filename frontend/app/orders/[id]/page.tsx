@@ -160,7 +160,7 @@ export default function OrderDetailPage() {
               <div className="relative h-20 w-20 overflow-hidden rounded-lg bg-muted">
                 <Image
                   src={item.image || "/placeholder.svg"}
-                  alt={item.productName}
+                  alt={item.productName || "Product image"}
                   fill
                   className="object-contain p-2"
                 />

@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import Image from 'next/image'
 import Link from 'next/link'
+import { trackMultiplePurchases } from '@/lib/recommendations'
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -77,7 +78,7 @@ export default function CheckoutPage() {
 
     if (user) {
       // Create order
-      await fetch('/api/orders', {
+      const orderResponse = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -85,6 +86,20 @@ export default function CheckoutPage() {
           items,
         }),
       })
+
+      // Track purchases for recommendations
+      if (orderResponse.ok) {
+        await trackMultiplePurchases(
+          user.id,
+          items.map((item) => {
+            const product = products.find((p) => p.id === item.productId)
+            return {
+              productId: item.productId,
+              categoryId: product?.category,
+            }
+          })
+        )
+      }
     }
 
     clearCart()
