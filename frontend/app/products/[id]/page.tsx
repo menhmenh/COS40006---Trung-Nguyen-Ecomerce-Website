@@ -1,31 +1,86 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Header } from '@/components/header'
+
 import { Footer } from '@/components/footer'
 import { ProductCard } from '@/components/product-card'
-import { products } from '@/lib/store'
 import { useCart } from '@/lib/cart-context'
 import { Button } from '@/components/ui/button'
 import { Star, Minus, Plus, ArrowLeft } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import type { Product } from '@/lib/types'
 
 export default function ProductDetailPage() {
   const params = useParams()
   const router = useRouter()
   const { addItem } = useCart()
   const { toast } = useToast()
-  const [quantity, setQuantity] = useState(1)
 
-  const product = products.find((p) => p.id === params.id)
+  const [quantity, setQuantity] = useState(1)
+  const [product, setProduct] = useState<Product | null>(null)
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const productId = String(params.id)
+
+    const loadProduct = async () => {
+      try {
+        const [productRes, productsRes] = await Promise.all([
+          fetch(`/api/products/${productId}`),
+          fetch('/api/products'),
+        ])
+
+        if (!productRes.ok) {
+          setProduct(null)
+          return
+        }
+
+        const [productData, productsData] = await Promise.all([
+          productRes.json(),
+          productsRes.json(),
+        ])
+
+        setProduct(productData)
+
+        if (Array.isArray(productsData)) {
+          setRelatedProducts(
+            productsData
+              .filter(
+                (item: Product) =>
+                  item.category === productData.category && item.id !== productData.id,
+              )
+              .slice(0, 3),
+          )
+        }
+      } catch (error) {
+        console.error('Failed to load product detail:', error)
+        setProduct(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadProduct()
+  }, [params.id])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen">
+        <div className="container mx-auto px-4 py-16 text-center text-muted-foreground">
+          Loading product...
+        </div>
+        <Footer />
+      </div>
+    )
+  }
 
   if (!product) {
     return (
       <div className="min-h-screen">
-        <Header />
         <div className="container mx-auto px-4 py-16 text-center">
           <h1 className="text-2xl font-bold mb-4">Product not found</h1>
           <Link href="/products">
@@ -37,24 +92,26 @@ export default function ProductDetailPage() {
     )
   }
 
-  const relatedProducts = products
-    .filter((p) => p.category === product.category && p.id !== product.id)
-    .slice(0, 3)
-
   const handleAddToCart = () => {
-    addItem(product.id, quantity)
+    addItem(
+      {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+      },
+      quantity,
+    )
+
     toast({
       title: 'Added to cart',
-      description: `${quantity} × ${product.name} added to your cart`,
+      description: `${quantity} x ${product.name} added to your cart`,
     })
   }
 
   return (
     <div className="min-h-screen">
-      <Header />
-
       <div className="container mx-auto px-4 py-12">
-        {/* Back Button */}
         <Link href="/products">
           <Button variant="ghost" className="mb-8">
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -62,7 +119,7 @@ export default function ProductDetailPage() {
           </Button>
         </Link>
 
-        {/* Product Details */}
+        {/* Product Details (Merged Layout) */}
         <div className="grid md:grid-cols-3 gap-12 mb-16">
           {/* Image */}
           <div className="md:col-span-1">
@@ -85,23 +142,15 @@ export default function ProductDetailPage() {
           <div className="md:col-span-2">
             <h1 className="text-3xl md:text-4xl font-bold mb-4 text-balance">{product.name}</h1>
 
-            {/* SKU */}
-            <p className="text-sm text-muted-foreground mb-4">
-              {product.sku && `Mã sản phẩm: ${product.sku}`}
-            </p>
-
-            {/* Description */}
-            <p className="text-muted-foreground mb-6 leading-relaxed text-sm">
-              {product.description}
-            </p>
-
-            {/* Price */}
-            <div className="text-4xl font-bold mb-6 text-primary">
-              {product.price.toLocaleString('vi-VN')} đ
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-sm text-muted-foreground">
+                {product.sku && `SKU: ${product.sku} | `}
+                Category: {product.categoryName || product.category}
+              </span>
             </div>
 
             {/* Rating */}
-            <div className="flex items-center gap-3 mb-8">
+            <div className="flex items-center gap-3 mb-6">
               <div className="flex">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
@@ -115,13 +164,30 @@ export default function ProductDetailPage() {
                 ))}
               </div>
               <span className="text-sm text-muted-foreground">
-                {product.rating} ({product.reviews} đánh giá)
+                {product.rating} ({product.reviews} reviews)
               </span>
             </div>
 
+            {/* Price */}
+            <div className="text-4xl font-bold mb-6 text-primary">
+              ${product.price.toFixed(2)}
+            </div>
+
+            {/* Stock Status (From backend logic) */}
+            <div className="mb-6">
+              <span className={`font-medium ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {product.stock > 0 ? `In Stock (${product.stock})` : 'Out of stock'}
+              </span>
+            </div>
+
+            {/* Description */}
+            <p className="text-muted-foreground mb-8 leading-relaxed text-sm">
+              {product.description}
+            </p>
+
             {/* Quantity */}
             <div className="mb-8">
-              <label className="text-sm font-medium mb-3 block">Chọn số lượng</label>
+              <label className="text-sm font-medium mb-3 block">Select Quantity</label>
               <div className="flex items-center gap-3">
                 <Button
                   variant="outline"
@@ -143,13 +209,14 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            {/* Add to Cart */}
+            {/* Add to Cart (With Stock verification) */}
             <div className="flex gap-4 mb-8">
               <Button
                 onClick={handleAddToCart}
                 className="flex-1 rounded-full py-6 text-base font-medium bg-primary text-primary-foreground"
+                disabled={product.stock <= 0}
               >
-                THÊM VÀO GIỎ HÀNG
+                ADD TO CART
               </Button>
               <Button
                 onClick={() => {
@@ -158,64 +225,65 @@ export default function ProductDetailPage() {
                 }}
                 variant="outline"
                 className="rounded-full px-8 font-medium"
+                disabled={product.stock <= 0}
               >
-                MUA NGAY
+                BUY NOW
               </Button>
             </div>
           </div>
         </div>
 
-        {/* Product Details Table */}
+        {/* Product Details Table (From Chị Anh's UI layout) */}
         <div className="mb-16">
-          <h2 className="text-2xl font-bold mb-6 uppercase">Chi tiết</h2>
+          <h2 className="text-2xl font-bold mb-6 uppercase">Details</h2>
           <div className="border border-border rounded-lg overflow-hidden">
             <table className="w-full">
               <tbody>
                 {product.sku && (
                   <tr className="border-b border-border">
-                    <td className="px-6 py-4 font-medium text-sm bg-muted">Mã sản phẩm</td>
+                    <td className="px-6 py-4 font-medium text-sm bg-muted w-1/3">SKU</td>
                     <td className="px-6 py-4 text-sm">{product.sku}</td>
                   </tr>
                 )}
                 {product.brand && (
                   <tr className="border-b border-border">
-                    <td className="px-6 py-4 font-medium text-sm bg-muted">Thương hiệu</td>
+                    <td className="px-6 py-4 font-medium text-sm bg-muted">Brand</td>
                     <td className="px-6 py-4 text-sm">{product.brand}</td>
                   </tr>
                 )}
                 {product.unit && (
                   <tr className="border-b border-border">
-                    <td className="px-6 py-4 font-medium text-sm bg-muted">Đơn vị tính</td>
+                    <td className="px-6 py-4 font-medium text-sm bg-muted">Unit</td>
                     <td className="px-6 py-4 text-sm">{product.unit}</td>
                   </tr>
                 )}
                 {product.packaging && (
                   <tr className="border-b border-border">
-                    <td className="px-6 py-4 font-medium text-sm bg-muted">Quy cách đóng thúng</td>
+                    <td className="px-6 py-4 font-medium text-sm bg-muted">Packaging</td>
                     <td className="px-6 py-4 text-sm">{product.packaging}</td>
                   </tr>
                 )}
                 {product.expiry && (
                   <tr className="border-b border-border">
-                    <td className="px-6 py-4 font-medium text-sm bg-muted">Hạn sử dụng</td>
+                    <td className="px-6 py-4 font-medium text-sm bg-muted">Expiry Date</td>
                     <td className="px-6 py-4 text-sm">{product.expiry}</td>
                   </tr>
                 )}
                 {product.origin && (
                   <tr className="border-b border-border">
-                    <td className="px-6 py-4 font-medium text-sm bg-muted">Xuất xứ</td>
+                    <td className="px-6 py-4 font-medium text-sm bg-muted">Origin</td>
                     <td className="px-6 py-4 text-sm">{product.origin}</td>
                   </tr>
                 )}
                 {product.specifications && (
                   <tr className="border-b border-border">
-                    <td className="px-6 py-4 font-medium text-sm bg-muted">Chỉ tiêu chất lượng</td>
+                    <td className="px-6 py-4 font-medium text-sm bg-muted">Quality Specifications</td>
                     <td className="px-6 py-4 text-sm">{product.specifications}</td>
                   </tr>
                 )}
                 {product.usage && (
                   <tr>
-                    <td className="px-6 py-4 font-medium text-sm bg-muted">Hướng dẫn sử dụng</td>
+                    <td className="px-6 py-4 font-medium text-sm bg-muted">Usage Instructions</td>
                     <td className="px-6 py-4 text-sm">{product.usage}</td>
                   </tr>
                 )}
@@ -223,6 +291,18 @@ export default function ProductDetailPage() {
             </table>
           </div>
         </div>
+
+        {/* Related Products (From Chị Nhi's logic) */}
+        {relatedProducts.length > 0 && (
+          <div>
+            <h2 className="text-3xl font-bold mb-8">You May Also Like</h2>
+            <div className="grid md:grid-cols-3 gap-8">
+              {relatedProducts.map((item) => (
+                <ProductCard key={item.id} product={item} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <Footer />

@@ -1,8 +1,7 @@
 'use client'
 
-import React from "react"
+import React, { useEffect, useState } from 'react'
 
-import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -23,48 +22,51 @@ import {
 } from '@/components/ui/select'
 import { Plus, Edit, Trash2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import type { Product } from '@/lib/store'
-import { categories } from '@/lib/store'
+import type { Category, Product } from '@/lib/types'
 
 export default function ProductManagement() {
   const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [isOpen, setIsOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const { toast } = useToast()
 
   const [formData, setFormData] = useState({
     name: '',
-    category: '',
+    categoryId: '',
     price: '',
+    stock: '',
     description: '',
     image: '',
-    badge: '',
-    rating: '',
-    reviews: '',
   })
 
   useEffect(() => {
     fetchProducts()
+    fetchCategories()
   }, [])
 
   const fetchProducts = async () => {
     const res = await fetch('/api/admin/products')
     const data = await res.json()
-    setProducts(data)
+    setProducts(Array.isArray(data) ? data : [])
+  }
+
+  const fetchCategories = async () => {
+    const res = await fetch('/api/categories')
+    const data = await res.json()
+    setCategories(Array.isArray(data) ? data : [])
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     const productData = {
       name: formData.name,
-      category: formData.category,
+      categoryId: formData.categoryId,
       price: parseFloat(formData.price),
+      stock: parseInt(formData.stock || '0', 10),
       description: formData.description,
       image: formData.image,
-      badge: formData.badge || undefined,
-      rating: parseFloat(formData.rating),
-      reviews: parseInt(formData.reviews),
     }
 
     try {
@@ -74,6 +76,7 @@ export default function ProductManagement() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: editingProduct.id, ...productData }),
         })
+
         if (res.ok) {
           toast({ description: 'Product updated successfully' })
         }
@@ -83,10 +86,12 @@ export default function ProductManagement() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(productData),
         })
+
         if (res.ok) {
           toast({ description: 'Product created successfully' })
         }
       }
+
       fetchProducts()
       resetForm()
       setIsOpen(false)
@@ -115,13 +120,11 @@ export default function ProductManagement() {
     setEditingProduct(product)
     setFormData({
       name: product.name,
-      category: product.category,
+      categoryId: product.categoryId,
       price: product.price.toString(),
+      stock: product.stock.toString(),
       description: product.description,
       image: product.image,
-      badge: product.badge || '',
-      rating: product.rating.toString(),
-      reviews: product.reviews.toString(),
     })
     setIsOpen(true)
   }
@@ -130,13 +133,11 @@ export default function ProductManagement() {
     setEditingProduct(null)
     setFormData({
       name: '',
-      category: '',
+      categoryId: '',
       price: '',
+      stock: '',
       description: '',
       image: '',
-      badge: '',
-      rating: '',
-      reviews: '',
     })
   }
 
@@ -144,10 +145,13 @@ export default function ProductManagement() {
     <div className="bg-white rounded-3xl p-8">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-[#1B1B1D]">{'Products'}</h2>
-        <Dialog open={isOpen} onOpenChange={(open) => {
-          setIsOpen(open)
-          if (!open) resetForm()
-        }}>
+        <Dialog
+          open={isOpen}
+          onOpenChange={(open) => {
+            setIsOpen(open)
+            if (!open) resetForm()
+          }}
+        >
           <DialogTrigger asChild>
             <Button className="bg-[#1B1B1D] text-white hover:bg-[#1B1B1D]/90 rounded-full px-6">
               <Plus className="w-4 h-4 mr-2" />
@@ -171,13 +175,16 @@ export default function ProductManagement() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="category">{'Category'}</Label>
-                  <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+                  <Select
+                    value={formData.categoryId}
+                    onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.slug}>
+                        <SelectItem key={cat.id} value={cat.id}>
                           {cat.name}
                         </SelectItem>
                       ))}
@@ -199,11 +206,14 @@ export default function ProductManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="badge">{'Badge (Optional)'}</Label>
+                  <Label htmlFor="stock">{'Stock'}</Label>
                   <Input
-                    id="badge"
-                    value={formData.badge}
-                    onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
+                    id="stock"
+                    type="number"
+                    min="0"
+                    value={formData.stock}
+                    onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                    required
                   />
                 </div>
               </div>
@@ -226,34 +236,7 @@ export default function ProductManagement() {
                   value={formData.image}
                   onChange={(e) => setFormData({ ...formData, image: e.target.value })}
                   placeholder="/products/product-name.png"
-                  required
                 />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="rating">{'Rating (0-5)'}</Label>
-                  <Input
-                    id="rating"
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="5"
-                    value={formData.rating}
-                    onChange={(e) => setFormData({ ...formData, rating: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="reviews">{'Number of Reviews'}</Label>
-                  <Input
-                    id="reviews"
-                    type="number"
-                    value={formData.reviews}
-                    onChange={(e) => setFormData({ ...formData, reviews: e.target.value })}
-                    required
-                  />
-                </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-4">
@@ -268,7 +251,10 @@ export default function ProductManagement() {
                 >
                   {'Cancel'}
                 </Button>
-                <Button type="submit" className="bg-[#1B1B1D] text-white hover:bg-[#1B1B1D]/90 rounded-full px-6">
+                <Button
+                  type="submit"
+                  className="bg-[#1B1B1D] text-white hover:bg-[#1B1B1D]/90 rounded-full px-6"
+                >
                   {editingProduct ? 'Update Product' : 'Create Product'}
                 </Button>
               </div>
@@ -284,8 +270,7 @@ export default function ProductManagement() {
               <th className="text-left py-4 px-4 font-semibold text-[#1B1B1D]">{'Product'}</th>
               <th className="text-left py-4 px-4 font-semibold text-[#1B1B1D]">{'Category'}</th>
               <th className="text-left py-4 px-4 font-semibold text-[#1B1B1D]">{'Price'}</th>
-              <th className="text-left py-4 px-4 font-semibold text-[#1B1B1D]">{'Rating'}</th>
-              <th className="text-left py-4 px-4 font-semibold text-[#1B1B1D]">{'Reviews'}</th>
+              <th className="text-left py-4 px-4 font-semibold text-[#1B1B1D]">{'Stock'}</th>
               <th className="text-right py-4 px-4 font-semibold text-[#1B1B1D]">{'Actions'}</th>
             </tr>
           </thead>
@@ -295,22 +280,19 @@ export default function ProductManagement() {
                 <td className="py-4 px-4">
                   <div className="flex items-center gap-3">
                     <img
-                      src={product.image || "/placeholder.svg"}
+                      src={product.image || '/placeholder.svg'}
                       alt={product.name}
                       className="w-12 h-12 object-cover rounded-lg"
                     />
                     <div>
                       <div className="font-medium text-[#1B1B1D]">{product.name}</div>
-                      {product.badge && (
-                        <div className="text-xs text-[#64646A]">{product.badge}</div>
-                      )}
+                      <div className="text-xs text-[#64646A]">{product.id}</div>
                     </div>
                   </div>
                 </td>
-                <td className="py-4 px-4 text-[#64646A] capitalize">{product.category.replace('-', ' ')}</td>
+                <td className="py-4 px-4 text-[#64646A]">{product.categoryName}</td>
                 <td className="py-4 px-4 text-[#1B1B1D] font-medium">${product.price}</td>
-                <td className="py-4 px-4 text-[#64646A]">{product.rating}</td>
-                <td className="py-4 px-4 text-[#64646A]">{product.reviews}</td>
+                <td className="py-4 px-4 text-[#64646A]">{product.stock}</td>
                 <td className="py-4 px-4">
                   <div className="flex justify-end gap-2">
                     <Button

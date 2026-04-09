@@ -2,38 +2,55 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 
-
 interface User {
   id: string
   email: string
   name: string
-  role?: string 
+  role?: 'admin' | 'user'
+}
+
+type AuthResult = {
+  success: boolean
+  error?: string
 }
 
 interface AuthContextType {
   user: User | null
-  login: (email: string, password: string) => Promise<boolean>
-  register: (email: string, password: string, name: string) => Promise<boolean>
+  login: (email: string, password: string) => Promise<AuthResult>
+  register: (email: string, password: string, name: string) => Promise<AuthResult>
   logout: () => void
   isLoading: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+function withUserRole(user: User): User {
+  return {
+    ...user,
+    role: user.email === 'admin@alowishus.com' ? 'admin' : 'user',
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Check if user is logged in
     const storedUser = localStorage.getItem('user')
+
     if (storedUser) {
-      setUser(JSON.parse(storedUser))
+      try {
+        setUser(withUserRole(JSON.parse(storedUser) as User))
+      } catch (error) {
+        console.error('[v0] Failed to parse stored user:', error)
+        localStorage.removeItem('user')
+      }
     }
+
     setIsLoading(false)
   }, [])
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<AuthResult> => {
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
@@ -41,29 +58,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ email, password }),
       })
 
-      if (response.ok) {
-        const userData = await response.json()
-        
-        
-        if (userData.email === 'admin@alowishus.com') {
-          userData.role = 'admin'
-        } else {
-          userData.role = 'user'
-        }
-      
+      const data = await response.json().catch(() => ({}))
 
+      if (response.ok) {
+        const userData = withUserRole(data as User)
         setUser(userData)
         localStorage.setItem('user', JSON.stringify(userData))
-        return true
+        return { success: true }
       }
-      return false
+
+      return {
+        success: false,
+        error: data?.error || 'Login failed',
+      }
     } catch (error) {
       console.error('[v0] Login error:', error)
-      return false
+      return {
+        success: false,
+        error: 'Cannot connect to server',
+      }
     }
   }
 
-  const register = async (email: string, password: string, name: string) => {
+  const register = async (
+    email: string,
+    password: string,
+    name: string,
+  ): Promise<AuthResult> => {
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
@@ -71,25 +92,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ email, password, name }),
       })
 
-      if (response.ok) {
-        const userData = await response.json()
-        
-        
-        if (userData.email === 'admin@alowishus.com') {
-          userData.role = 'admin'
-        } else {
-          userData.role = 'user'
-        }
-        
+      const data = await response.json().catch(() => ({}))
 
+      if (response.ok) {
+        const userData = withUserRole(data as User)
         setUser(userData)
         localStorage.setItem('user', JSON.stringify(userData))
-        return true
+        return { success: true }
       }
-      return false
+
+      return {
+        success: false,
+        error: data?.error || 'Registration failed',
+      }
     } catch (error) {
       console.error('[v0] Register error:', error)
-      return false
+      return {
+        success: false,
+        error: 'Cannot connect to server',
+      }
     }
   }
 

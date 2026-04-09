@@ -1,7 +1,5 @@
 'use client'
 
-import { useState } from 'react'
-import Header from '@/components/header'
 import Footer from '@/components/footer'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import ProductManagement from '@/components/admin/product-management'

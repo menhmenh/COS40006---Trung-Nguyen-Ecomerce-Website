@@ -1,17 +1,14 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
-import { products } from './store'
 
-interface CartItem {
-  productId: string
-  quantity: number
-  price: number
-}
+import type { CartItem, Product } from '@/lib/types'
+
+type ProductSnapshot = Pick<Product, 'id' | 'name' | 'price' | 'image'>
 
 interface CartContextType {
   items: CartItem[]
-  addItem: (productId: string, quantity?: number) => void
+  addItem: (product: ProductSnapshot, quantity?: number) => void
   removeItem: (productId: string) => void
   updateQuantity: (productId: string, quantity: number) => void
   clearCart: () => void
@@ -27,7 +24,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const storedCart = localStorage.getItem('cart')
     if (storedCart) {
-      setItems(JSON.parse(storedCart))
+      const parsed = JSON.parse(storedCart) as Array<Partial<CartItem>>
+      setItems(
+        parsed.map((item) => ({
+          productId: item.productId || '',
+          productName: item.productName || 'Product',
+          quantity: Number(item.quantity || 0),
+          price: Number(item.price || 0),
+          image: item.image || '/placeholder.svg',
+        })),
+      )
     }
   }, [])
 
@@ -35,20 +41,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('cart', JSON.stringify(items))
   }, [items])
 
-  const addItem = (productId: string, quantity = 1) => {
-    const product = products.find((p) => p.id === productId)
-    if (!product) return
-
+  const addItem = (product: ProductSnapshot, quantity = 1) => {
     setItems((prev) => {
-      const existingItem = prev.find((item) => item.productId === productId)
+      const existingItem = prev.find((item) => item.productId === product.id)
+
       if (existingItem) {
         return prev.map((item) =>
-          item.productId === productId
+          item.productId === product.id
             ? { ...item, quantity: item.quantity + quantity }
-            : item
+            : item,
         )
       }
-      return [...prev, { productId, quantity, price: product.price }]
+
+      return [
+        ...prev,
+        {
+          productId: product.id,
+          productName: product.name,
+          quantity,
+          price: product.price,
+          image: product.image,
+        },
+      ]
     })
   }
 
@@ -61,10 +75,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       removeItem(productId)
       return
     }
+
     setItems((prev) =>
       prev.map((item) =>
-        item.productId === productId ? { ...item, quantity } : item
-      )
+        item.productId === productId ? { ...item, quantity } : item,
+      ),
     )
   }
 

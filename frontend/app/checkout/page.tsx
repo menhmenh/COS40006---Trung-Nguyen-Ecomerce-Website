@@ -1,11 +1,10 @@
 'use client'
 
-import React from "react"
-
-import { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
+import { AddressModal } from '@/components/address-modal'
 import { useCart } from '@/lib/cart-context'
 import { useAuth } from '@/lib/auth-context'
 import { products } from '@/lib/store'
@@ -26,14 +25,15 @@ export default function CheckoutPage() {
   const [formData, setFormData] = useState({
     email: user?.email || '',
     name: user?.name || '',
+    phone: '',
     address: '',
     city: '',
-    zipCode: '',
     cardNumber: '',
     expiryDate: '',
     cvv: '',
   })
 
+  // Giữ UI state từ nhánh của chị Anh
   const [selectedPayment, setSelectedPayment] = useState<'card' | 'bank' | 'cod'>('cod')
   const [addresses, setAddresses] = useState([
     {
@@ -49,6 +49,15 @@ export default function CheckoutPage() {
     },
   ])
   const [selectedAddress, setSelectedAddress] = useState(1)
+
+  // Giữ logic load dữ liệu user từ nhánh của chị Nhi
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      email: user?.email || prev.email,
+      name: user?.name || prev.name,
+    }))
+  }, [user])
 
   if (items.length === 0) {
     return (
@@ -67,32 +76,62 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!user) {
+      toast({
+        title: 'Vui lòng đăng nhập',
+        description: 'Bạn cần có tài khoản trước khi đặt hàng.',
+        variant: 'destructive',
+      })
+      router.push('/login')
+      return
+    }
+
     setIsProcessing(true)
 
-    // Simulate payment processing
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-
-    if (user) {
-      // Create order
-      await fetch('/api/orders', {
+    try {
+      // Giữ logic fetch API của chị Nhi
+      const response = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user.id,
-          items,
+          items: items.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+          })),
+          shippingAddress: {
+            fullName: formData.name,
+            phone: formData.phone,
+            addressLine: formData.address,
+            city: formData.city,
+          },
+          paymentMethod: 'Card',
         }),
       })
+
+      if (!response.ok) {
+        throw new Error('Failed to create order')
+      }
+
+      clearCart()
+
+      toast({
+        title: 'Đặt hàng thành công!',
+        description: 'Cảm ơn bạn đã mua hàng. Đơn hàng của bạn đang được xử lý.',
+      })
+
+      router.push('/account')
+    } catch (error) {
+      console.error('Checkout failed:', error)
+      toast({
+        title: 'Lỗi đặt hàng',
+        description: 'Không thể xử lý đơn hàng lúc này. Vui lòng thử lại.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsProcessing(false)
     }
-
-    clearCart()
-    setIsProcessing(false)
-
-    toast({
-      title: 'Đặt hàng thành công!',
-      description: 'Cảm ơn bạn đã mua hàng. Đơn hàng của bạn đang được xử lý.',
-    })
-
-    router.push('/account')
   }
 
   return (
@@ -103,9 +142,9 @@ export default function CheckoutPage() {
         <h1 className="text-4xl font-bold mb-8">Thanh Toán</h1>
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Checkout Form */}
           <form onSubmit={handleSubmit} className="lg:col-span-2 space-y-8">
-            {/* Address */}
+            
+            {/* Giữ lại toàn bộ UI Form của chị Anh */}
             <div className="bg-muted rounded-lg p-6 border border-border">
               <h2 className="text-2xl font-bold mb-6">Địa chỉ giao hàng</h2>
               <div className="space-y-3 max-h-64 overflow-y-auto">
@@ -149,7 +188,6 @@ export default function CheckoutPage() {
               </Button>
             </div>
 
-            {/* Contact Information */}
             <div className="bg-muted rounded-lg p-6 border border-border">
               <h2 className="text-2xl font-bold mb-6">Thông tin liên hệ</h2>
               <div className="space-y-4">
@@ -175,10 +213,21 @@ export default function CheckoutPage() {
                     className="mt-1"
                   />
                 </div>
+                <div>
+                  <Label htmlFor="phone">Số điện thoại</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    required
+                    placeholder="0912345678"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className="mt-1"
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Payment Method */}
             <div className="bg-muted rounded-lg p-6 border border-border">
               <h2 className="text-2xl font-bold mb-6">Phương thức thanh toán</h2>
               <div className="space-y-3">
@@ -296,7 +345,6 @@ export default function CheckoutPage() {
               </div>
             )}
 
-            {/* Confirm Button */}
             <Button
               type="submit"
               disabled={isProcessing}
@@ -306,7 +354,6 @@ export default function CheckoutPage() {
             </Button>
           </form>
 
-          {/* Order Summary */}
           <div>
             <div className="bg-muted rounded-lg p-6 border border-border sticky top-24">
               <h2 className="text-2xl font-bold mb-6">Chi tiết giỏ hàng</h2>

@@ -1,14 +1,15 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
-import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { ProductCard } from '@/components/product-card'
-import { products } from '@/lib/store'
 import { Star, Utensils, Coffee, IceCream, ChevronLeft, ChevronRight } from 'lucide-react'
+import { listProducts } from '@/lib/server-data'
+import type { Product } from '@/lib/types'
 
-export default function Home() {
-  const bestSellers = products.filter((p) => p.badge).slice(0, 3)
+export default async function Home() {
+  const products = await listProducts()
+  const bestSellers = products.slice(0, 3)
 
   return (
     <div className="min-h-screen">
@@ -186,7 +187,7 @@ export default function Home() {
 
           {/* Grid hiển thị sản phẩm */}
           <div className="grid md:grid-cols-3 gap-8">
-            {bestSellers.map((product) => (
+            {bestSellers.map((product: Product) => (
               <div key={product.id} className="group">
                 <ProductCard product={product} />
                 {/* Lưu ý: Nếu bạn muốn ProductCard cũng có phong cách Trung Nguyên, 

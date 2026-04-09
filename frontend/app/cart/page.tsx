@@ -1,15 +1,21 @@
 'use client'
 
+<<<<<<< HEAD
 import React from "react"
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Header } from '@/components/header'
+=======
+>>>>>>> 51eaab8d71c6dbaa751fa349a8796638587e4c4e
 import { Footer } from '@/components/footer'
 import { AddressModal } from '@/components/address-modal'
 import { useCart } from '@/lib/cart-context'
+<<<<<<< HEAD
 import { useAuth } from '@/lib/auth-context'
 import { products } from '@/lib/store'
+=======
+>>>>>>> 51eaab8d71c6dbaa751fa349a8796638587e4c4e
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -100,12 +106,16 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen">
+<<<<<<< HEAD
       <Header />
 
+=======
+>>>>>>> 51eaab8d71c6dbaa751fa349a8796638587e4c4e
       <div className="container mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold mb-8">Thanh Toán</h1>
 
         <div className="grid lg:grid-cols-3 gap-8">
+<<<<<<< HEAD
           {/* Checkout Form */}
           <form onSubmit={handleSubmit} className="lg:col-span-2 space-y-8">
             {/* Address */}
@@ -325,9 +335,70 @@ export default function CheckoutPage() {
               {isProcessing ? 'Đang xử lý...' : 'XÁC NHẬN ĐẶT HÀNG'}
             </Button>
           </form>
+=======
+          <div className="lg:col-span-2 space-y-4">
+            {items.map((item) => (
+              <div key={item.productId} className="bg-muted rounded-2xl p-6 flex gap-6">
+                <div className="w-24 h-24 bg-background rounded-xl relative flex-shrink-0">
+                  <Image
+                    src={item.image || '/placeholder.svg'}
+                    alt={item.productName}
+                    fill
+                    className="object-contain p-2"
+                  />
+                </div>
 
-          {/* Order Summary */}
+                <div className="flex-1">
+                  <Link href={`/products/${item.productId}`}>
+                    <h3 className="font-bold text-lg mb-1 hover:text-muted-foreground transition-colors">
+                      {item.productName}
+                    </h3>
+                  </Link>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    ${item.price.toFixed(2)} each
+                  </p>
+
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                      className="rounded-full h-8 w-8"
+                    >
+                      <Minus className="h-3 w-3" />
+                    </Button>
+                    <span className="font-medium w-8 text-center">{item.quantity}</span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                      className="rounded-full h-8 w-8"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeItem(item.productId)}
+                      className="ml-auto text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <div className="font-bold text-xl">
+                    ${(item.price * item.quantity).toFixed(2)}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+>>>>>>> 51eaab8d71c6dbaa751fa349a8796638587e4c4e
+
           <div>
+<<<<<<< HEAD
             <div className="bg-muted rounded-lg p-6 border border-border sticky top-24">
               <h2 className="text-2xl font-bold mb-6">Chi tiết giỏ hàng</h2>
 
@@ -350,6 +421,12 @@ export default function CheckoutPage() {
               </div>
 
               <div className="border-t border-border pt-4 space-y-3">
+=======
+            <div className="bg-muted rounded-2xl p-6 sticky top-24">
+              <h2 className="text-2xl font-bold mb-6">Order Summary</h2>
+
+              <div className="space-y-3 mb-6">
+>>>>>>> 51eaab8d71c6dbaa751fa349a8796638587e4c4e
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Tổng tiền hàng</span>
                   <span className="font-medium">{total.toLocaleString('vi-VN')}đ</span>
