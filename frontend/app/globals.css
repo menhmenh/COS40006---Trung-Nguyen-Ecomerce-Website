@@ -82,8 +82,8 @@
 }
 
 @theme inline {
-  --font-sans: 'Jost', 'Jost Fallback';
-  --font-mono: 'Jost', 'Jost Fallback';
+  --font-sans: 'Inter', 'Inter Fallback';
+  --font-mono: 'Inter', 'Inter Fallback';
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

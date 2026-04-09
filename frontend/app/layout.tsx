@@ -1,24 +1,14 @@
 import React from "react"
 import type { Metadata } from 'next'
-import { Jost } from 'next/font/google'
+import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
-import { Header } from '@/components/header'
-import { Footer } from '@/components/footer'
-import { AuthProvider } from '@/lib/auth-context'
-import { CartProvider } from '@/lib/cart-context'
-import { Toaster } from '@/components/ui/toaster'
 
-
-const jost = Jost({ 
-  subsets: ["latin"],
-  variable: "--font-jost", 
-  display: "swap",
-});
+const inter = Inter({ subsets: ["latin", "vietnamese"] });
 
 export const metadata: Metadata = {
-  title: 'Trung Nguyen E-Commerce', 
-  description: 'Authentic Vietnamese Coffee - Taste the difference.',
+  title: 'Alowishus Delicious Coffee',
+  description: 'A drink from the "My Alowishus" bottled brews range OR grab one of our delicious coffee\'s.',
   generator: 'v0.app',
   icons: {
     icon: [
@@ -39,6 +29,10 @@ export const metadata: Metadata = {
   },
 }
 
+import { AuthProvider } from '@/lib/auth-context'
+import { CartProvider } from '@/lib/cart-context'
+import { Toaster } from '@/components/ui/toaster'
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -46,15 +40,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${jost.className} antialiased min-h-screen flex flex-col`}>
+      <body className={`font-sans antialiased`}>
         <AuthProvider>
           <CartProvider>
-            <Header />
-            <main className="flex-1">
-              {children}
-            </main>
+            {children}
             <Toaster />
-
           </CartProvider>
         </AuthProvider>
         <Analytics />
