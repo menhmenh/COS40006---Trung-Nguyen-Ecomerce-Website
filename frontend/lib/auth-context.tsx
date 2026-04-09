@@ -6,6 +6,7 @@ interface User {
   id: string
   email: string
   name: string
+  role?: 'admin' | 'user'
 }
 
 type AuthResult = {
@@ -23,15 +24,29 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+function withUserRole(user: User): User {
+  return {
+    ...user,
+    role: user.email === 'admin@alowishus.com' ? 'admin' : 'user',
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user')
+
     if (storedUser) {
-      setUser(JSON.parse(storedUser))
+      try {
+        setUser(withUserRole(JSON.parse(storedUser) as User))
+      } catch (error) {
+        console.error('[v0] Failed to parse stored user:', error)
+        localStorage.removeItem('user')
+      }
     }
+
     setIsLoading(false)
   }, [])
 
@@ -46,8 +61,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await response.json().catch(() => ({}))
 
       if (response.ok) {
-        setUser(data)
-        localStorage.setItem('user', JSON.stringify(data))
+        const userData = withUserRole(data as User)
+        setUser(userData)
+        localStorage.setItem('user', JSON.stringify(userData))
         return { success: true }
       }
 
@@ -79,8 +95,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await response.json().catch(() => ({}))
 
       if (response.ok) {
-        setUser(data)
-        localStorage.setItem('user', JSON.stringify(data))
+        const userData = withUserRole(data as User)
+        setUser(userData)
+        localStorage.setItem('user', JSON.stringify(userData))
         return { success: true }
       }
 
