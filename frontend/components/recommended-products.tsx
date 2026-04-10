@@ -228,7 +228,7 @@ export function RecommendedProducts({ userId, limit = 10 }: RecommendationsProps
                       <div className="flex justify-between items-start gap-2">
                         <div className="flex-1">
                           <Link href={`/products/${product.product_id}`}>
-                            <CardTitle className="text-lg hover:text-blue-600 cursor-pointer line-clamp-2">
+                            <CardTitle className="text-lg hover:text-[#C5A059] cursor-pointer line-clamp-2">
                               {product.name}
                             </CardTitle>
                           </Link>
@@ -304,14 +304,14 @@ export function RecommendedProducts({ userId, limit = 10 }: RecommendationsProps
           {/* Indicators */}
           {showNavigation && recommendations.length > 0 && (
             <div className="flex justify-center gap-2 mt-6">
-              {Array.from({ length: Math.ceil(recommendations.length / itemsPerView) }).map(
+              {Array.from({ length: Math.max(1, recommendations.length - itemsPerView + 1) }).map(
                 (_, i) => (
                   <button
                     key={i}
                     onClick={() => setCurrentIndex(Math.min(i, maxIndex))}
                     className={`h-2 rounded-full transition-all duration-300 ${
                       i === Math.min(currentIndex, Math.floor(maxIndex / 1))
-                        ? 'bg-blue-600 w-8'
+                        ? 'bg-[#C5A059] w-8'
                         : 'bg-gray-300 w-2 hover:bg-gray-400'
                     }`}
                   />
