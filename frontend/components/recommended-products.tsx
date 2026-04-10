@@ -211,7 +211,7 @@ export function RecommendedProducts({ userId, limit = 10 }: RecommendationsProps
               className="flex gap-6 transition-transform duration-500 ease-out"
               style={{
                 transform: `translateX(-${currentIndex * (100 / itemsPerView)}%)`,
-                width: `${(recommendations.length / itemsPerView) * 100}%`,
+                width: `${(recommendations.length / itemsPerView) * 90}%`,
               }}
             >
               {recommendations.map((product, index) => (
