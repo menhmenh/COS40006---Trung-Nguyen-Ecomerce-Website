@@ -9,9 +9,11 @@ export async function POST(request: Request) {
     const { email, password } = await request.json()
 
     const pool = await getPool()
+    
+    // Đã bỏ sql.VarChar(255) ở dòng input
     const result = await pool
       .request()
-      .input('email', sql.VarChar(255), email)
+      .input('email', email)
       .query(`
         SELECT TOP 1
           user_id,
@@ -35,9 +37,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
     }
 
+    // Đã bỏ sql.Char(36) ở dòng input
     await pool
       .request()
-      .input('userId', sql.Char(36), user.user_id)
+      .input('userId', user.user_id)
       .query(`
         UPDATE users
         SET last_login = GETDATE()
