@@ -128,7 +128,7 @@ export default function ProductsPage() {
               {/* Products Grid */}
               {filteredProducts.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                  {filteredProducts.map((product) => (
+                  {filteredProducts.map((product:any) => (
                     <ProductCard key={product.id} product={product} />
                   ))}
                 </div>
