@@ -9,6 +9,9 @@ import { useAuth } from "@/lib/auth-context"
 
 import ProfileTab from "@/components/account/profile-tab"
 import OrderHistoryTab from "@/components/account/order-history-tab"
+import SubscriptionManagementTab from "@/components/account/subscription-management-tab"
+import InvoiceHistory from "@/components/account/invoice-history"
+import PaymentMethodsTab from "@/components/account/payment-methods-tab"
 
 export default function AccountPage() {
 
@@ -38,15 +41,30 @@ export default function AccountPage() {
 
         <TabsList>
           <TabsTrigger value="profile">Profile</TabsTrigger>
+          <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
           <TabsTrigger value="orders">Orders</TabsTrigger>
+          <TabsTrigger value="invoices">Invoices</TabsTrigger>
+          <TabsTrigger value="payments">Payments</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
           <ProfileTab user={user}/>
         </TabsContent>
 
+        <TabsContent value="subscriptions">
+          <SubscriptionManagementTab userId={user.id}/>
+        </TabsContent>
+
         <TabsContent value="orders">
           <OrderHistoryTab userId={user.id}/>
+        </TabsContent>
+
+        <TabsContent value="invoices">
+          <InvoiceHistory userId={user.id}/>
+        </TabsContent>
+
+        <TabsContent value="payments">
+          <PaymentMethodsTab userId={user.id}/>
         </TabsContent>
 
         </Tabs>

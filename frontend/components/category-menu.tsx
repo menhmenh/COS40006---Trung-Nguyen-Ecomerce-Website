@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Coffee } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,6 +55,12 @@ export function CategoryMenu() {
             <DropdownMenuItem asChild>
               <Link href="/products" className="cursor-pointer">
                 All Products
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/subscriptions/plans" className="cursor-pointer flex items-center gap-2">
+                <Coffee className="h-4 w-4" />
+                Monthly Box
               </Link>
             </DropdownMenuItem>
             <div className="border-t my-1" />

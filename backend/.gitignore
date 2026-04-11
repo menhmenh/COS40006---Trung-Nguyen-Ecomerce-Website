@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.env
+.env.local
+.vscodeignore
+.DS_Store
+*.log
+npm-debug.log*
+package-lock.json
+yarn.lock
+.idea/
+.vscode/
+*.swp
+*.swo

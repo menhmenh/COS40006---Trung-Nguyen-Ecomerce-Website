@@ -217,7 +217,7 @@ export function RecommendedProducts({ userId, limit = 10 }: RecommendationsProps
               {recommendations.map((product, index) => (
                 <div
                   key={product.product_id}
-                  className="flex-shrink-0"
+                  className="shrink-0"
                   style={{ width: `${100 / itemsPerView}%` }}
                 >
                   <Card

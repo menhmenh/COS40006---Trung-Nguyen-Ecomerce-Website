@@ -7,6 +7,7 @@ import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { ProductCard } from '@/components/product-card'
 import { RecommendedProducts } from '@/components/recommended-products'
+import { SubscriptionShowcase } from '@/components/sections/subscription-showcase'
 import { useAuth } from '@/lib/auth-context'
 import { products } from '@/lib/store'
 import { Star, Utensils, Coffee, IceCream, ChevronLeft, ChevronRight } from 'lucide-react'
@@ -57,7 +58,7 @@ export default function Home() {
             </div>
 
             {/* Image Section với hiệu ứng đổ bóng nhẹ */}
-            <div className="relative h-[450px] md:h-[600px] flex items-center justify-center">
+            <div className="relative h-112.5 md:h-150 flex items-center justify-center">
               <div className="absolute inset-0 bg-[#C5A059]/5 rounded-full blur-3xl" /> {/* Ánh sáng vàng nhẹ phía sau ảnh */}
               <Image
                 src="/ca-phe-phin-loc-giay-trung-nguyen.png" 
@@ -140,7 +141,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             {/* Hình ảnh sản phẩm đặc trưng */}
-            <div className="relative h-[450px] group">
+            <div className="relative h-112.5 group">
               <div className="absolute inset-0 bg-[#C5A059]/10 rounded-full blur-3xl group-hover:bg-[#C5A059]/20 transition-colors duration-500" />
               <Image
                 src="/trung-nguyen-store.png"  
@@ -214,6 +215,9 @@ export default function Home() {
         </div>
       </section>
 
+{/* Coffee Monthly Box - FR15 Subscriptions */}
+      <SubscriptionShowcase />
+
 {/* Instant Coffee - G7 & Legend Special Edition */}
       <section className="py-16 bg-white"> {/* Đổi bg-muted sang trắng để làm nổi bật hình ảnh sản phẩm */}
         <div className="container mx-auto px-4">
@@ -238,7 +242,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="relative h-[450px] order-1 md:order-2">
+            <div className="relative h-112.5 order-1 md:order-2">
               {/* Hiệu ứng trang trí phía sau sản phẩm */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[#C5A059]/5 rounded-full blur-3xl" />
               <Image

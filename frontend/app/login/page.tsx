@@ -93,7 +93,7 @@ export default function AuthPage() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24 relative">
           
-          <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-[1px] bg-gray-200 -translate-x-1/2"></div>
+          <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-gray-200 -translate-x-1/2"></div>
 
           {/* ================= CỘT TRÁI: LOGIN ================= */}
           <div className="space-y-6">
@@ -144,7 +144,7 @@ export default function AuthPage() {
                 <Button 
                   type="submit" 
                   disabled={isLoginLoading}
-                  className="bg-black hover:bg-gray-800 text-white font-bold uppercase py-6 px-8 rounded-sm text-sm tracking-wider w-auto min-w-[150px]"
+                  className="bg-black hover:bg-gray-800 text-white font-bold uppercase py-6 px-8 rounded-sm text-sm tracking-wider w-auto min-w-37.5"
                 >
                   {isLoginLoading ? 'LOGGING IN...' : 'LOG IN'}
                 </Button>
@@ -234,7 +234,7 @@ export default function AuthPage() {
                 <Button 
                   type="submit"
                   disabled={isRegLoading} 
-                  className="bg-black hover:bg-gray-800 text-white font-bold uppercase py-6 px-8 rounded-sm text-sm tracking-wider w-auto min-w-[150px]"
+                  className="bg-black hover:bg-gray-800 text-white font-bold uppercase py-6 px-8 rounded-sm text-sm tracking-wider w-auto min-w-37.5"
                 >
                   {isRegLoading ? 'REGISTERING...' : 'REGISTER'}
                 </Button>

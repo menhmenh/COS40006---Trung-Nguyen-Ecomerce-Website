@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
 import { useCart } from '@/lib/cart-context'
 import { Button } from '@/components/ui/button'
-import { ShoppingCart, User, LogOut, LayoutDashboard } from 'lucide-react' 
+import { ShoppingCart, User, LogOut, LayoutDashboard, Coffee } from 'lucide-react' 
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,6 +59,10 @@ function Header() {
               <>
                 <Link href="/products" className="text-sm font-medium hover:text-muted-foreground transition-smooth">
                   Shop Coffee
+                </Link>
+                <Link href="/subscriptions/plans" className="text-sm font-medium hover:text-muted-foreground transition-smooth flex items-center gap-2">
+                  <Coffee className="h-4 w-4" />
+                  Monthly Box
                 </Link>
                 <Link href="/about" className="text-sm font-medium hover:text-muted-foreground transition-smooth">
                   About Us
