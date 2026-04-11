@@ -20,7 +20,7 @@ type ProductRow = {
   price: number | string
   stock: number | string | null
   description: string | null
-  image: string | null // Cột image Cường mới thêm vào DB
+  image: string | null 
   rating: number | string | null
   reviews: number | string | null
 }
@@ -100,7 +100,7 @@ function mapProduct(row: ProductRow): Product {
   const categoryName = row.categoryName || 'Uncategorized'
   const stock = Number(row.stock || 0)
 
-  // CHỐT HẠ LOGIC ẢNH: Tự động sửa đường dẫn nếu thiếu dấu /
+  // LOGIC ẢNH: Tự động sửa đường dẫn nếu thiếu dấu /
   let finalImage = row.image || '/placeholder.svg'
   if (finalImage !== '/placeholder.svg' && !finalImage.startsWith('/') && !finalImage.startsWith('http')) {
     finalImage = `/${finalImage}`
@@ -156,9 +156,15 @@ async function getOrderItems(orderId: string): Promise<OrderItem[]> {
         p.name AS productName,
         od.price,
         od.quantity,
-        COALESCE(p.image, '/placeholder.svg') AS image
+        COALESCE(pi.image_url, '/placeholder.svg') AS image
       FROM order_details od
       LEFT JOIN products p ON p.product_id = od.product_id
+      OUTER APPLY (
+        SELECT TOP 1 image_url
+        FROM product_images
+        WHERE product_id = od.product_id
+        ORDER BY product_image_id
+      ) pi
       WHERE od.order_id = @orderId
       ORDER BY p.name
     `)
@@ -219,11 +225,17 @@ export async function listProducts() {
       p.price,
       p.stock,
       p.description,
-      p.image, -- LẤY TRỰC TIẾP TỪ BẢNG PRODUCTS
+      COALESCE(pi.image_url, '/placeholder.svg') AS image,
       CAST(COALESCE(review_stats.rating, 0) AS DECIMAL(10, 2)) AS rating,
       COALESCE(review_stats.reviews, 0) AS reviews
     FROM products p
     LEFT JOIN categories c ON c.category_id = p.category_id
+    OUTER APPLY (
+      SELECT TOP 1 image_url
+      FROM product_images
+      WHERE product_id = p.product_id
+      ORDER BY product_image_id
+    ) pi
     OUTER APPLY (
       SELECT
         AVG(CAST(rating AS DECIMAL(10, 2))) AS rating,
@@ -251,11 +263,17 @@ export async function getProductById(id: string) {
         p.price,
         p.stock,
         p.description,
-        p.image, -- LẤY TRỰC TIẾP TỪ BẢNG PRODUCTS
+        COALESCE(pi.image_url, '/placeholder.svg') AS image,
         CAST(COALESCE(review_stats.rating, 0) AS DECIMAL(10, 2)) AS rating,
         COALESCE(review_stats.reviews, 0) AS reviews
       FROM products p
       LEFT JOIN categories c ON c.category_id = p.category_id
+      OUTER APPLY (
+        SELECT TOP 1 image_url
+        FROM product_images
+        WHERE product_id = p.product_id
+        ORDER BY product_image_id
+      ) pi
       OUTER APPLY (
         SELECT
           AVG(CAST(rating AS DECIMAL(10, 2))) AS rating,
@@ -281,14 +299,27 @@ export async function createProduct(input: ProductInput) {
       .input('price', input.price)
       .input('stock', input.stock)
       .input('description', input.description)
-      .input('image', input.image || null)
       .query(`
-        INSERT INTO products (product_id, category_id, name, price, stock, description, image, created_at)
+        INSERT INTO products (product_id, category_id, name, price, stock, description, created_at)
         OUTPUT INSERTED.product_id AS id
-        VALUES (CONVERT(CHAR(36), NEWID()), @categoryId, @name, @price, @stock, @description, @image, GETDATE())
+        VALUES (CONVERT(CHAR(36), NEWID()), @categoryId, @name, @price, @stock, @description, GETDATE())
       `)
+    
+    const productId = productInsert.recordset[0]?.id
+
+    // Trả lại logic insert ảnh vào bảng product_images
+    if (input.image) {
+      await new sql.Request(transaction)
+        .input('productId', productId)
+        .input('imageUrl', input.image)
+        .query(`
+          INSERT INTO product_images (product_image_id, product_id, image_url)
+          VALUES (CONVERT(CHAR(36), NEWID()), @productId, @imageUrl)
+        `)
+    }
+
     await transaction.commit()
-    return getProductById(productInsert.recordset[0]?.id)
+    return getProductById(productId)
   } catch (error) {
     await transaction.rollback()
     throw error
@@ -297,33 +328,67 @@ export async function createProduct(input: ProductInput) {
 
 export async function updateProduct(id: string, input: Partial<ProductInput>) {
   const pool = await getPool()
-  const request = pool.request()
-  request.input('id', id)
-  request.input('categoryId', input.categoryId ?? null)
-  request.input('name', input.name ?? null)
-  request.input('price', input.price ?? null)
-  request.input('stock', input.stock ?? null)
-  request.input('description', input.description ?? null)
-  request.input('image', input.image ?? null)
+  const transaction = new sql.Transaction(pool)
+  await transaction.begin()
+  try {
+    await new sql.Request(transaction)
+      .input('id', id)
+      .input('categoryId', input.categoryId ?? null)
+      .input('name', input.name ?? null)
+      .input('price', input.price ?? null)
+      .input('stock', input.stock ?? null)
+      .input('description', input.description ?? null)
+      .query(`
+        UPDATE products
+        SET
+          category_id = COALESCE(@categoryId, category_id),
+          name = COALESCE(@name, name),
+          price = COALESCE(@price, price),
+          stock = COALESCE(@stock, stock),
+          description = COALESCE(@description, description)
+        WHERE product_id = @id
+      `)
 
-  await request.query(`
-    UPDATE products
-    SET
-      category_id = COALESCE(@categoryId, category_id),
-      name = COALESCE(@name, name),
-      price = COALESCE(@price, price),
-      stock = COALESCE(@stock, stock),
-      description = COALESCE(@description, description),
-      image = COALESCE(@image, image)
-    WHERE product_id = @id
-  `)
-  return getProductById(id)
+    // Logic update bảng product_images
+    if (typeof input.image === 'string') {
+      await new sql.Request(transaction)
+        .input('id', id)
+        .input('image', input.image)
+        .query(`
+          IF EXISTS (SELECT 1 FROM product_images WHERE product_id = @id)
+          BEGIN
+            UPDATE product_images SET image_url = @image
+            WHERE product_image_id = (SELECT TOP 1 product_image_id FROM product_images WHERE product_id = @id ORDER BY product_image_id)
+          END
+          ELSE
+          BEGIN
+            INSERT INTO product_images (product_image_id, product_id, image_url)
+            VALUES (CONVERT(CHAR(36), NEWID()), @id, @image)
+          END
+        `)
+    }
+
+    await transaction.commit()
+    return getProductById(id)
+  } catch (error) {
+    await transaction.rollback()
+    throw error
+  }
 }
 
 export async function deleteProduct(id: string) {
   const pool = await getPool()
-  await pool.request().input('id', id).query(`DELETE FROM products WHERE product_id = @id`)
-  return true
+  const transaction = new sql.Transaction(pool)
+  await transaction.begin()
+  try {
+    await new sql.Request(transaction).input('id', id).query(`DELETE FROM product_images WHERE product_id = @id;`)
+    await new sql.Request(transaction).input('id', id).query(`DELETE FROM products WHERE product_id = @id;`)
+    await transaction.commit()
+    return true
+  } catch (error) {
+    await transaction.rollback()
+    throw error
+  }
 }
 
 export async function createOrder(input: CreateOrderInput) {
