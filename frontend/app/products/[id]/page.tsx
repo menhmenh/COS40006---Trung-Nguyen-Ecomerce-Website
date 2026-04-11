@@ -10,11 +10,9 @@ import { ProductCard } from '@/components/product-card'
 import { useCart } from '@/lib/cart-context'
 import { useAuth } from '@/lib/auth-context'
 import { Button } from '@/components/ui/button'
-import { Star, Minus, Plus, ArrowLeft } from 'lucide-react'
+import { Star, Minus, Plus, ArrowLeft, Coffee } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import type { Product } from '@/lib/types'
-
-
 import { trackProductView, trackAddToCart } from '@/lib/recommendations'
 
 export default function ProductDetailPage() {
@@ -29,16 +27,18 @@ export default function ProductDetailPage() {
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
 
+  // --- BỘ HOOKS PHẢI LUÔN NẰM TRÊN CÙNG ---
+
+  // 1. Hook tải dữ liệu sản phẩm
   useEffect(() => {
     const productId = String(params.id)
-
     const loadProduct = async () => {
       try {
         const [productRes, productsRes] = await Promise.all([
           fetch(`/api/products/${productId}`),
           fetch('/api/products'),
         ])
-
+        
         if (!productRes.ok) {
           setProduct(null)
           return
@@ -54,11 +54,10 @@ export default function ProductDetailPage() {
         if (Array.isArray(productsData)) {
           setRelatedProducts(
             productsData
-              .filter(
-                (item: Product) =>
-                  item.category === productData.category && item.id !== productData.id,
+              .filter((item: Product) => 
+                item.category === productData.category && item.id !== productData.id
               )
-              .slice(0, 3),
+              .slice(0, 3)
           )
         }
       } catch (error) {
@@ -68,35 +67,34 @@ export default function ProductDetailPage() {
         setLoading(false)
       }
     }
-
     loadProduct()
   }, [params.id])
 
-  if (loading) {
-    return (
-      <div className="min-h-screen">
-        <div className="container mx-auto px-4 py-16 text-center text-muted-foreground">
-          Đang tải sản phẩm...
-        </div>
-        <Footer />
-      </div>
-    )
-  }
-
-  // Theo dõi lượt xem sản phẩm (Code của Chanh)
+  // 2. Hook theo dõi lượt xem (Tracking) - Đã sửa lỗi vi phạm Hook Rules
   useEffect(() => {
     if (user?.id && product?.id) {
       trackProductView(user.id, product.id, product.category)
     }
   }, [user?.id, product?.id, product?.category])
 
+  // --- CÁC ĐIỀU KIỆN RENDER SỚM (PHẢI NẰM SAU HOOKS) ---
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <Coffee className="h-10 w-10 animate-spin text-[#C5A059] mb-4" />
+        <p className="font-medium tracking-wider uppercase text-[#3E2723]">Đang pha cà phê...</p>
+      </div>
+    )
+  }
+
   if (!product) {
     return (
-      <div className="min-h-screen">
-        <div className="container mx-auto px-4 py-16 text-center">
-          <h1 className="text-2xl font-bold mb-4">Không tìm thấy sản phẩm</h1>
+      <div className="min-h-screen flex flex-col">
+        <div className="flex-1 container mx-auto px-4 py-16 text-center">
+          <h1 className="text-2xl font-bold mb-4 text-[#3E2723]">Không tìm thấy sản phẩm</h1>
           <Link href="/products">
-            <Button>Quay lại Cửa hàng</Button>
+            <Button className="rounded-full bg-[#3E2723]">Quay lại Cửa hàng</Button>
           </Link>
         </div>
         <Footer />
@@ -105,145 +103,143 @@ export default function ProductDetailPage() {
   }
 
   const handleAddToCart = () => {
-    // Dùng logic truyền data giỏ hàng chuẩn của nhánh HEAD
-    addItem(
-      {
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.image,
-      },
-      quantity,
-    )
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+    }, quantity)
 
-    // Theo dõi hành vi thêm vào giỏ (Code của Chanh)
     if (user?.id) {
       trackAddToCart(user.id, product.id, product.category)
     }
     
     toast({
       title: 'Đã thêm vào giỏ hàng',
-      description: `Đã thêm ${quantity} x ${product.name} vào giỏ hàng của bạn`,
+      description: `Đã thêm ${quantity} x ${product.name} vào giỏ hàng thành công`,
     })
   }
 
   return (
-    <div className="min-h-screen">
-      <div className="container mx-auto px-4 py-12">
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-1 container mx-auto px-4 py-12">
         <Link href="/products">
-          <Button variant="ghost" className="mb-8">
+          <Button variant="ghost" className="mb-8 hover:bg-muted rounded-full">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Quay lại Cửa hàng
           </Button>
         </Link>
 
-        {/* Product Details */}
+        {/* Thông tin chính sản phẩm */}
         <div className="grid md:grid-cols-3 gap-12 mb-16">
-          {/* Image */}
+          {/* Ảnh sản phẩm */}
           <div className="md:col-span-1">
-            <div className="bg-muted rounded-lg p-8 relative aspect-square mb-6">
-              <Image
-                src={product.image || "/placeholder.svg"}
-                alt={product.name || "Product image"}
-                fill
-                className="object-contain p-8"
+            <div className="bg-muted rounded-2xl p-8 relative aspect-square border border-border overflow-hidden">
+              <Image 
+                src={product.image || "/placeholder.svg"} 
+                alt={product.name || "Product image"} 
+                fill 
+                className="object-contain p-8 hover:scale-110 transition-transform duration-500" 
               />
               {product.badge && (
-                <div className="absolute top-4 left-4 bg-primary text-primary-foreground text-xs font-medium px-3 py-1 rounded">
+                <div className="absolute top-4 left-4 bg-[#C5A059] text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-tighter">
                   {product.badge}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Info */}
+          {/* Nội dung chi tiết */}
           <div className="md:col-span-2">
-            <h1 className="text-3xl md:text-4xl font-bold mb-4 text-balance">{product.name}</h1>
-
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-sm text-muted-foreground">
-                {product.sku && `Mã sản phẩm: ${product.sku} | `}
+            <h1 className="text-3xl md:text-5xl font-bold mb-4 text-[#3E2723]">{product.name}</h1>
+            
+            <div className="flex items-center gap-3 mb-6">
+              <span className="text-sm font-medium text-muted-foreground uppercase tracking-widest">
+                {product.sku && `Mã: ${product.sku} | `}
                 Danh mục: {product.categoryName || product.category}
               </span>
             </div>
 
-            {/* Price */}
-            <div className="text-4xl font-bold mb-6 text-primary">
+            <div className="text-4xl font-bold mb-6 text-[#C5A059]">
               {product.price.toLocaleString('vi-VN')} đ
             </div>
 
-            {/* Rating */}
-            <div className="flex items-center gap-3 mb-8">
+            {/* Đánh giá sao */}
+            <div className="flex items-center gap-3 mb-6">
               <div className="flex">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
                     key={star}
                     className={`h-4 w-4 ${
                       star <= Math.floor(product.rating)
-                        ? 'fill-foreground text-foreground'
+                        ? 'fill-[#C5A059] text-[#C5A059]'
                         : 'text-muted-foreground'
                     }`}
                   />
                 ))}
               </div>
               <span className="text-sm text-muted-foreground">
-                {product.rating} ({product.reviews} đánh giá)
+                ({product.reviews} lượt đánh giá)
               </span>
             </div>
 
-            {/* Stock Status (Code kiểm tra tồn kho cực xịn của HEAD) */}
-            <div className="mb-6">
-              <span className={`font-medium ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {product.stock > 0 ? `Còn hàng (${product.stock} sản phẩm)` : 'Tạm hết hàng'}
+            {/* Trạng thái kho hàng */}
+            <div className="mb-8">
+              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase ${
+                product.stock > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+              }`}>
+                {product.stock > 0 ? `Còn hàng: ${product.stock}` : 'Hết hàng'}
               </span>
             </div>
 
-            {/* Description */}
-            <p className="text-muted-foreground mb-8 leading-relaxed text-sm">
-              {product.description}
+            <p className="text-[#5D4037] mb-8 leading-relaxed text-lg italic">
+              "{product.description}"
             </p>
 
-            {/* Quantity */}
+            {/* Chọn số lượng */}
             <div className="mb-8">
-              <label className="text-sm font-medium mb-3 block">Chọn số lượng</label>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="rounded"
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <span className="text-lg font-medium w-12 text-center">{quantity}</span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="rounded"
-                  disabled={product.stock <= quantity}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
+              <label className="text-sm font-bold mb-3 block uppercase tracking-wider text-[#3E2723]">Số lượng</label>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center border border-border rounded-full p-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    className="rounded-full h-10 w-10"
+                    disabled={product.stock <= 0}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span className="text-lg font-bold w-12 text-center">{quantity}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setQuantity(quantity + 1)}
+                    className="rounded-full h-10 w-10"
+                    disabled={product.stock <= quantity}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
 
-            {/* Add to Cart (Disabled nếu hết hàng) */}
-            <div className="flex gap-4 mb-8">
+            {/* Nút hành động */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-8">
               <Button
                 onClick={handleAddToCart}
-                className="flex-1 rounded-full py-6 text-base font-medium bg-primary text-primary-foreground"
+                className="flex-1 rounded-full py-7 text-sm font-bold uppercase tracking-widest bg-[#3E2723] hover:bg-[#2A1B18]"
                 disabled={product.stock <= 0}
               >
                 THÊM VÀO GIỎ HÀNG
               </Button>
               <Button
                 onClick={() => {
-                  handleAddToCart()
-                  router.push('/cart')
+                  handleAddToCart();
+                  router.push('/cart');
                 }}
                 variant="outline"
-                className="rounded-full px-8 font-medium"
+                className="flex-1 rounded-full py-7 text-sm font-bold uppercase tracking-widest border-[#3E2723] text-[#3E2723]"
                 disabled={product.stock <= 0}
               >
                 MUA NGAY
@@ -252,70 +248,37 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        {/* Product Details Table (Bảng tiếng Việt của Chanh) */}
-        <div className="mb-16">
-          <h2 className="text-2xl font-bold mb-6 uppercase">Chi tiết sản phẩm</h2>
-          <div className="border border-border rounded-lg overflow-hidden">
-            <table className="w-full">
+        {/* Bảng chi tiết kỹ thuật */}
+        <div className="mb-20">
+          <h2 className="text-2xl font-bold mb-8 uppercase tracking-tighter text-[#3E2723] border-b-2 border-[#C5A059] inline-block">Thông số chi tiết</h2>
+          <div className="border border-border rounded-2xl overflow-hidden shadow-sm">
+            <table className="w-full text-left border-collapse">
               <tbody>
-                {product.sku && (
-                  <tr className="border-b border-border">
-                    <td className="px-6 py-4 font-medium text-sm bg-muted w-1/3">Mã sản phẩm</td>
-                    <td className="px-6 py-4 text-sm">{product.sku}</td>
+                {[
+                  { label: 'Mã sản phẩm', value: product.sku },
+                  { label: 'Thương hiệu', value: product.brand },
+                  { label: 'Đơn vị tính', value: product.unit },
+                  { label: 'Quy cách', value: product.packaging },
+                  { label: 'Hạn sử dụng', value: product.expiry },
+                  { label: 'Xuất xứ', value: product.origin },
+                  { label: 'Chỉ tiêu chất lượng', value: product.specifications },
+                  { label: 'Hướng dẫn sử dụng', value: product.usage }
+                ].map((row, idx) => row.value && (
+                  <tr key={idx} className={idx % 2 === 0 ? 'bg-muted/30' : 'bg-white'}>
+                    <td className="px-6 py-4 font-bold text-sm text-[#3E2723] w-1/3 border-r border-border uppercase tracking-tight">{row.label}</td>
+                    <td className="px-6 py-4 text-sm text-[#5D4037]">{row.value}</td>
                   </tr>
-                )}
-                {product.brand && (
-                  <tr className="border-b border-border">
-                    <td className="px-6 py-4 font-medium text-sm bg-muted w-1/3">Thương hiệu</td>
-                    <td className="px-6 py-4 text-sm">{product.brand}</td>
-                  </tr>
-                )}
-                {product.unit && (
-                  <tr className="border-b border-border">
-                    <td className="px-6 py-4 font-medium text-sm bg-muted w-1/3">Đơn vị tính</td>
-                    <td className="px-6 py-4 text-sm">{product.unit}</td>
-                  </tr>
-                )}
-                {product.packaging && (
-                  <tr className="border-b border-border">
-                    <td className="px-6 py-4 font-medium text-sm bg-muted w-1/3">Quy cách đóng thúng</td>
-                    <td className="px-6 py-4 text-sm">{product.packaging}</td>
-                  </tr>
-                )}
-                {product.expiry && (
-                  <tr className="border-b border-border">
-                    <td className="px-6 py-4 font-medium text-sm bg-muted w-1/3">Hạn sử dụng</td>
-                    <td className="px-6 py-4 text-sm">{product.expiry}</td>
-                  </tr>
-                )}
-                {product.origin && (
-                  <tr className="border-b border-border">
-                    <td className="px-6 py-4 font-medium text-sm bg-muted w-1/3">Xuất xứ</td>
-                    <td className="px-6 py-4 text-sm">{product.origin}</td>
-                  </tr>
-                )}
-                {product.specifications && (
-                  <tr className="border-b border-border">
-                    <td className="px-6 py-4 font-medium text-sm bg-muted w-1/3">Chỉ tiêu chất lượng</td>
-                    <td className="px-6 py-4 text-sm">{product.specifications}</td>
-                  </tr>
-                )}
-                {product.usage && (
-                  <tr>
-                    <td className="px-6 py-4 font-medium text-sm bg-muted w-1/3">Hướng dẫn sử dụng</td>
-                    <td className="px-6 py-4 text-sm">{product.usage}</td>
-                  </tr>
-                )}
+                ))}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* Related Products (Logic của nhánh HEAD, tiêu đề tiếng Việt) */}
+        {/* Sản phẩm liên quan */}
         {relatedProducts.length > 0 && (
-          <div>
-            <h2 className="text-3xl font-bold mb-8">Có thể bạn sẽ thích</h2>
-            <div className="grid md:grid-cols-3 gap-8">
+          <div className="mt-20">
+            <h2 className="text-3xl font-bold mb-10 text-center text-[#3E2723] uppercase tracking-tighter">Sản phẩm tương tự</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {relatedProducts.map((item) => (
                 <ProductCard key={item.id} product={item} />
               ))}
@@ -323,7 +286,6 @@ export default function ProductDetailPage() {
           </div>
         )}
       </div>
-
       <Footer />
     </div>
   )
