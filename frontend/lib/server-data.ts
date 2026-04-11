@@ -147,7 +147,7 @@ async function getOrderItems(orderId: string): Promise<OrderItem[]> {
   const pool = await getPool()
   const result = await pool
     .request()
-    .input('orderId', sql.Char(36), orderId)
+    .input('orderId', orderId)
     .query(`
       SELECT
         od.product_id AS productId,
@@ -283,7 +283,7 @@ export async function getProductById(id: string) {
   const pool = await getPool()
   const result = await pool
     .request()
-    .input('id', sql.Char(36), id)
+    .input('id', id)
     .query(`
       SELECT
         p.product_id AS id,
@@ -329,11 +329,11 @@ export async function createProduct(input: ProductInput) {
 
   try {
     const productInsert = await new sql.Request(transaction)
-      .input('categoryId', sql.Char(36), input.categoryId)
-      .input('name', sql.VarChar(255), input.name)
-      .input('price', sql.Decimal(10, 2), input.price)
-      .input('stock', sql.Int, input.stock)
-      .input('description', sql.NVarChar(sql.MAX), input.description)
+      .input('categoryId', input.categoryId)
+      .input('name', input.name)
+      .input('price', input.price)
+      .input('stock', input.stock)
+      .input('description', input.description)
       .query(`
         INSERT INTO products (
           product_id,
@@ -362,8 +362,8 @@ export async function createProduct(input: ProductInput) {
 
     if (input.image) {
       await new sql.Request(transaction)
-        .input('productId', sql.Char(36), productId)
-        .input('imageUrl', sql.NVarChar(sql.MAX), input.image)
+        .input('productId', productId)
+        .input('imageUrl', input.image)
         .query(`
           INSERT INTO product_images (
             product_image_id,
@@ -394,12 +394,12 @@ export async function updateProduct(id: string, input: Partial<ProductInput>) {
 
   try {
     await new sql.Request(transaction)
-      .input('id', sql.Char(36), id)
-      .input('categoryId', sql.Char(36), input.categoryId || null)
-      .input('name', sql.VarChar(255), input.name || null)
-      .input('price', sql.Decimal(10, 2), input.price ?? null)
-      .input('stock', sql.Int, input.stock ?? null)
-      .input('description', sql.NVarChar(sql.MAX), input.description ?? null)
+      .input('id', id)
+      .input('categoryId', input.categoryId || null)
+      .input('name', input.name || null)
+      .input('price', input.price ?? null)
+      .input('stock', input.stock ?? null)
+      .input('description', input.description ?? null)
       .query(`
         UPDATE products
         SET
@@ -413,8 +413,8 @@ export async function updateProduct(id: string, input: Partial<ProductInput>) {
 
     if (typeof input.image === 'string') {
       await new sql.Request(transaction)
-        .input('id', sql.Char(36), id)
-        .input('image', sql.NVarChar(sql.MAX), input.image)
+        .input('id', id)
+        .input('image', input.image)
         .query(`
           IF EXISTS (SELECT 1 FROM product_images WHERE product_id = @id)
           BEGIN
@@ -459,7 +459,7 @@ export async function deleteProduct(id: string) {
 
   try {
     await new sql.Request(transaction)
-      .input('id', sql.Char(36), id)
+      .input('id', id)
       .query(`
         DELETE FROM product_images WHERE product_id = @id;
         DELETE FROM products WHERE product_id = @id;
@@ -484,7 +484,7 @@ export async function createOrder(input: CreateOrderInput) {
 
   try {
     const userExists = await new sql.Request(transaction)
-      .input('userId', sql.Char(36), input.userId)
+      .input('userId', input.userId)
       .query(`
         SELECT TOP 1 user_id
         FROM users
@@ -496,11 +496,11 @@ export async function createOrder(input: CreateOrderInput) {
     }
 
     const addressInsert = await new sql.Request(transaction)
-      .input('userId', sql.Char(36), input.userId)
-      .input('recipientName', sql.VarChar(255), input.shippingAddress.fullName)
-      .input('phoneNumber', sql.VarChar(20), input.shippingAddress.phone || '')
-      .input('addressLine', sql.NVarChar(sql.MAX), input.shippingAddress.addressLine)
-      .input('city', sql.VarChar(100), input.shippingAddress.city)
+      .input('userId', input.userId)
+      .input('recipientName', input.shippingAddress.fullName)
+      .input('phoneNumber', input.shippingAddress.phone || '')
+      .input('addressLine', input.shippingAddress.addressLine)
+      .input('city', input.shippingAddress.city)
       .query(`
         INSERT INTO addresses (
           address_id,
@@ -526,9 +526,9 @@ export async function createOrder(input: CreateOrderInput) {
     const addressId = addressInsert.recordset[0]?.id as string
 
     const orderInsert = await new sql.Request(transaction)
-      .input('userId', sql.Char(36), input.userId)
-      .input('addressId', sql.Char(36), addressId)
-      .input('orderCode', sql.VarChar(50), orderCode)
+      .input('userId', input.userId)
+      .input('addressId', addressId)
+      .input('orderCode', orderCode)
       .query(`
         INSERT INTO orders (
           order_id,
@@ -554,7 +554,7 @@ export async function createOrder(input: CreateOrderInput) {
 
     for (const item of input.items) {
       const productResult = await new sql.Request(transaction)
-        .input('productId', sql.Char(36), item.productId)
+        .input('productId', item.productId)
         .query(`
           SELECT
             product_id AS id,
@@ -572,10 +572,10 @@ export async function createOrder(input: CreateOrderInput) {
       total += unitPrice * item.quantity
 
       await new sql.Request(transaction)
-        .input('orderId', sql.Char(36), orderId)
-        .input('productId', sql.Char(36), product.id)
-        .input('quantity', sql.Int, item.quantity)
-        .input('price', sql.Decimal(10, 2), unitPrice)
+        .input('orderId', orderId)
+        .input('productId', product.id)
+        .input('quantity', item.quantity)
+        .input('price', unitPrice)
         .query(`
           INSERT INTO order_details (
             order_detail_id,
@@ -595,9 +595,9 @@ export async function createOrder(input: CreateOrderInput) {
     }
 
     await new sql.Request(transaction)
-      .input('orderId', sql.Char(36), orderId)
-      .input('total', sql.Decimal(10, 2), total)
-      .input('paymentMethod', sql.VarChar(50), input.paymentMethod || 'Card')
+      .input('orderId', orderId)
+      .input('total', total)
+      .input('paymentMethod', input.paymentMethod || 'Card')
       .query(`
         INSERT INTO payments (
           payment_id,
@@ -618,8 +618,8 @@ export async function createOrder(input: CreateOrderInput) {
       `)
 
     await new sql.Request(transaction)
-      .input('orderId', sql.Char(36), orderId)
-      .input('addressId', sql.Char(36), addressId)
+      .input('orderId', orderId)
+      .input('addressId', addressId)
       .query(`
         INSERT INTO deliveries (
           delivery_id,
@@ -638,6 +638,41 @@ export async function createOrder(input: CreateOrderInput) {
           'Pending'
         )
       `)
+    
+    
+    const pointsGained = Math.floor(total)
+
+    
+    const userPointsResult = await new sql.Request(transaction)
+      .input('userId', input.userId)
+      .query(`
+        SELECT ISNULL(loyalty_points, 0) AS currentPoints 
+        FROM users 
+        WHERE user_id = @userId
+      `)
+      
+    const currentPoints = userPointsResult.recordset[0]?.currentPoints || 0
+    const newPoints = currentPoints + pointsGained
+
+    
+    let newTier = 'Silver'
+    if (newPoints >= 5000) {
+      newTier = 'Platinum'
+    } else if (newPoints >= 1000) {
+      newTier = 'Gold'
+    }
+
+    
+    await new sql.Request(transaction)
+      .input('userId', input.userId)
+      .input('newPoints', newPoints)
+      .input('newTier', newTier)
+      .query(`
+        UPDATE users
+        SET loyalty_points = @newPoints, loyalty_tier = @newTier
+        WHERE user_id = @userId
+      `)
+    
 
     await transaction.commit()
     return getOrderById(orderId)
@@ -650,7 +685,7 @@ export async function createOrder(input: CreateOrderInput) {
 export async function getOrdersByUserId(userId: string) {
   const rows = await getOrderHeaders(
     'WHERE o.user_id = @userId',
-    (request) => request.input('userId', sql.Char(36), userId),
+    (request) => request.input('userId', userId),
   )
 
   return hydrateOrders(rows)
@@ -659,7 +694,7 @@ export async function getOrdersByUserId(userId: string) {
 export async function getOrderById(orderId: string) {
   const rows = await getOrderHeaders(
     'WHERE o.order_id = @orderId',
-    (request) => request.input('orderId', sql.Char(36), orderId),
+    (request) => request.input('orderId', orderId),
   )
 
   if (rows.length === 0) {
@@ -680,8 +715,8 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
 
   await pool
     .request()
-    .input('orderId', sql.Char(36), orderId)
-    .input('status', sql.VarChar(30), status)
+    .input('orderId', orderId)
+    .input('status', status)
     .query(`
       UPDATE orders
       SET status = @status

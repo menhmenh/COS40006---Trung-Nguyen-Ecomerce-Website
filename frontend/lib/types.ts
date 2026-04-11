@@ -69,4 +69,7 @@ export type SessionUser = {
   email: string
   name: string
   username?: string
+  role?: string
+  points?: number
+  tier?: string
 }

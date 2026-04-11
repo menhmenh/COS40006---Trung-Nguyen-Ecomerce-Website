@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
-import Image from 'next/image'
 import Link from 'next/link'
 
 export default function CheckoutPage() {
@@ -22,18 +21,18 @@ export default function CheckoutPage() {
   const { toast } = useToast()
   const [isProcessing, setIsProcessing] = useState(false)
 
+  // 1. THÊM STATE ĐỂ BẬT/TẮT MODAL
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
+
   const [formData, setFormData] = useState({
     email: user?.email || '',
     name: user?.name || '',
     phone: '',
-    address: '',
-    city: '',
     cardNumber: '',
     expiryDate: '',
     cvv: '',
   })
 
-  // Giữ UI state từ nhánh của chị Anh
   const [selectedPayment, setSelectedPayment] = useState<'card' | 'bank' | 'cod'>('cod')
   const [addresses, setAddresses] = useState([
     {
@@ -50,7 +49,6 @@ export default function CheckoutPage() {
   ])
   const [selectedAddress, setSelectedAddress] = useState(1)
 
-  // Giữ logic load dữ liệu user từ nhánh của chị Nhi
   useEffect(() => {
     setFormData((prev) => ({
       ...prev,
@@ -61,9 +59,9 @@ export default function CheckoutPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen flex flex-col">
         <Header />
-        <div className="container mx-auto px-4 py-16 text-center">
+        <div className="container flex-1 mx-auto px-4 py-16 text-center">
           <h1 className="text-3xl font-bold mb-4">Giỏ hàng của bạn trống</h1>
           <Link href="/products">
             <Button className="rounded-full px-8">MUA CÀ PHÊ</Button>
@@ -87,10 +85,21 @@ export default function CheckoutPage() {
       return
     }
 
+    // 2. TÌM LẤY ĐỊA CHỈ ĐANG ĐƯỢC CHỌN (TICK RADIO)
+    const activeAddress = addresses.find((addr) => addr.id === selectedAddress)
+    
+    if (!activeAddress || !activeAddress.address || !activeAddress.city) {
+      toast({
+        title: 'Thiếu địa chỉ',
+        description: 'Vui lòng bấm + Thêm địa chỉ và điền đầy đủ thông tin giao hàng.',
+        variant: 'destructive',
+      })
+      return
+    }
+
     setIsProcessing(true)
 
     try {
-      // Giữ logic fetch API của chị Nhi
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -100,13 +109,14 @@ export default function CheckoutPage() {
             productId: item.productId,
             quantity: item.quantity,
           })),
+          // 3. GỬI ĐÚNG DỮ LIỆU ĐỊA CHỈ MÀ USER ĐÃ NHẬP
           shippingAddress: {
-            fullName: formData.name,
-            phone: formData.phone,
-            addressLine: formData.address,
-            city: formData.city,
+            fullName: activeAddress.fullName || formData.name,
+            phone: activeAddress.phone || formData.phone,
+            addressLine: `${activeAddress.address}, ${activeAddress.ward}, ${activeAddress.district}`,
+            city: activeAddress.city,
           },
-          paymentMethod: 'Card',
+          paymentMethod: selectedPayment,
         }),
       })
 
@@ -144,7 +154,6 @@ export default function CheckoutPage() {
         <div className="grid lg:grid-cols-3 gap-8">
           <form onSubmit={handleSubmit} className="lg:col-span-2 space-y-8">
             
-            {/* Giữ lại toàn bộ UI Form của chị Anh */}
             <div className="bg-muted rounded-lg p-6 border border-border">
               <h2 className="text-2xl font-bold mb-6">Địa chỉ giao hàng</h2>
               <div className="space-y-3 max-h-64 overflow-y-auto">
@@ -171,7 +180,7 @@ export default function CheckoutPage() {
                         <p className="text-sm text-muted-foreground">{addr.fullName}</p>
                         <p className="text-sm text-muted-foreground">{addr.phone}</p>
                         <p className="text-sm text-muted-foreground">
-                          {addr.address}, {addr.ward}, {addr.district}, {addr.city}
+                          {addr.address && `${addr.address}, `}{addr.ward && `${addr.ward}, `}{addr.district && `${addr.district}, `}{addr.city}
                         </p>
                         {addr.isDefault && (
                           <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded mt-2 inline-block">
@@ -183,7 +192,14 @@ export default function CheckoutPage() {
                   </div>
                 ))}
               </div>
-              <Button type="button" variant="outline" className="w-full mt-4 rounded-full">
+              
+              {/* 4. GẮN SỰ KIỆN ONCLICK ĐỂ MỞ MODAL */}
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="w-full mt-4 rounded-full"
+                onClick={() => setIsAddressModalOpen(true)}
+              >
                 + THÊM ĐỊA CHỈ
               </Button>
             </div>
@@ -214,11 +230,10 @@ export default function CheckoutPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="phone">Số điện thoại</Label>
+                  <Label htmlFor="phone">Số điện thoại (dự phòng)</Label>
                   <Input
                     id="phone"
                     type="tel"
-                    required
                     placeholder="0912345678"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -271,28 +286,6 @@ export default function CheckoutPage() {
                     <div>
                       <p className="font-medium">Thẻ tín dụng / Thẻ ghi nợ</p>
                       <p className="text-sm text-muted-foreground">Visa, Mastercard, JCB</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  onClick={() => setSelectedPayment('bank')}
-                  className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                    selectedPayment === 'bank'
-                      ? 'border-primary bg-background'
-                      : 'border-border hover:border-primary'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="radio"
-                      name="payment"
-                      checked={selectedPayment === 'bank'}
-                      onChange={() => setSelectedPayment('bank')}
-                    />
-                    <div>
-                      <p className="font-medium">Chuyển khoản ngân hàng</p>
-                      <p className="text-sm text-muted-foreground">Chuyển tiền trước khi giao hàng</p>
                     </div>
                   </div>
                 </div>
@@ -385,17 +378,13 @@ export default function CheckoutPage() {
                   <span className="text-muted-foreground">Phí vận chuyển</span>
                   <span className="font-medium">Miễn phí</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Thuế VAT (10%)</span>
-                  <span className="font-medium">{(total * 0.1).toLocaleString('vi-VN')}đ</span>
-                </div>
               </div>
 
               <div className="border-t border-border mt-4 pt-4">
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-bold">Tổng cộng</span>
                   <span className="text-3xl font-bold text-primary">
-                    {(total * 1.1).toLocaleString('vi-VN')}đ
+                    {total.toLocaleString('vi-VN')}đ
                   </span>
                 </div>
               </div>
@@ -403,6 +392,14 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
+      
+      {/* 5. GỌI MODAL RA GIAO DIỆN */}
+      <AddressModal
+        open={isAddressModalOpen}
+        onOpenChange={setIsAddressModalOpen}
+        addresses={addresses}
+        onAddressesChange={setAddresses}
+      />
 
       <Footer />
     </div>

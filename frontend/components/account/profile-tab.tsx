@@ -1,7 +1,22 @@
 import { Button } from "@/components/ui/button"
-import { User } from "lucide-react"
+import { User, Award } from "lucide-react"
 
 export default function ProfileTab({ user }: any) {
+  // Hàm chọn màu sắc huy hiệu tùy theo hạng
+  const getTierBadgeStyle = (tier?: string) => {
+    switch (tier?.toLowerCase()) {
+      case 'platinum':
+        return 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400'
+      case 'gold':
+        return 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400'
+      default: // Silver
+        return 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-400'
+    }
+  }
+
+  const currentTier = user.tier || 'Silver'
+  const currentPoints = user.points || 0
+
   return (
     <div className="max-w-2xl rounded-2xl bg-muted p-8">
       <div className="mb-8 flex items-center gap-4">
@@ -12,7 +27,12 @@ export default function ProfileTab({ user }: any) {
         <div>
           <h2 className="text-xl font-bold">{user.name}</h2>
           <p className="text-muted-foreground">{user.email}</p>
-          <p className="text-sm text-muted-foreground">Member account</p>
+          
+          {/* HUY HIỆU ĐIỂM THÀNH VIÊN HIỂN THỊ Ở ĐÂY */}
+          <div className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-semibold shadow-sm ${getTierBadgeStyle(currentTier)}`}>
+            <Award size={16} />
+            {currentTier} Member • {currentPoints.toLocaleString()} pts
+          </div>
         </div>
       </div>
 
@@ -23,18 +43,29 @@ export default function ProfileTab({ user }: any) {
 
       <div className="space-y-3">
         <div className="flex justify-between border-b pb-2">
-          <span>Name</span>
-          <span>{user.name}</span>
+          <span className="text-muted-foreground">Name</span>
+          <span className="font-medium">{user.name}</span>
         </div>
 
         <div className="flex justify-between border-b pb-2">
-          <span>Email</span>
-          <span>{user.email}</span>
+          <span className="text-muted-foreground">Email</span>
+          <span className="font-medium">{user.email}</span>
+        </div>
+
+        {/* THÊM THÔNG TIN ĐIỂM VÀO BẢNG CHI TIẾT */}
+        <div className="flex justify-between border-b pb-2">
+          <span className="text-muted-foreground">Loyalty Tier</span>
+          <span className="font-medium">{currentTier}</span>
         </div>
 
         <div className="flex justify-between border-b pb-2">
-          <span>User ID</span>
-          <span>{user.id}</span>
+          <span className="text-muted-foreground">Reward Points</span>
+          <span className="font-medium">{currentPoints.toLocaleString()}</span>
+        </div>
+
+        <div className="flex justify-between border-b pb-2">
+          <span className="text-muted-foreground">User ID</span>
+          <span className="text-sm font-mono text-muted-foreground">{user.id}</span>
         </div>
       </div>
 

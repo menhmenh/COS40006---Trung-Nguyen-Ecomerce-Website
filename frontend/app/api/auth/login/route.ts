@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
-import { getPool, sql } from '@/lib/db'
+import { getPool } from '@/lib/db'
 
 export const runtime = 'nodejs'
 
@@ -10,7 +10,7 @@ export async function POST(request: Request) {
 
     const pool = await getPool()
     
-    // Đã bỏ sql.VarChar(255) ở dòng input
+    // Đã thêm loyalty_points và loyalty_tier vào câu query
     const result = await pool
       .request()
       .input('email', email)
@@ -21,7 +21,9 @@ export async function POST(request: Request) {
           email,
           first_name,
           last_name,
-          password_hash
+          password_hash,
+          loyalty_points,
+          loyalty_tier
         FROM users
         WHERE email = @email
       `)
@@ -37,7 +39,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
     }
 
-    // Đã bỏ sql.Char(36) ở dòng input
+    const adminCheck = await pool
+      .request()
+      .input('userId', user.user_id)
+      .query(`
+        SELECT TOP 1 * FROM admins 
+        WHERE user_id = @userId
+      `)
+      
+    const role = adminCheck.recordset.length > 0 ? 'admin' : 'user'
+
     await pool
       .request()
       .input('userId', user.user_id)
@@ -47,6 +58,7 @@ export async function POST(request: Request) {
         WHERE user_id = @userId
       `)
 
+    // Trả thêm điểm và hạng về cho Frontend (nếu NULL thì mặc định là 0 và Silver)
     return NextResponse.json({
       id: user.user_id,
       email: user.email,
@@ -54,6 +66,9 @@ export async function POST(request: Request) {
         [user.first_name, user.last_name].filter(Boolean).join(' ').trim() ||
         user.username,
       username: user.username,
+      role: role,
+      points: user.loyalty_points || 0,
+      tier: user.loyalty_tier || 'Silver'
     })
   } catch (error) {
     console.error('Login API error:', error)
