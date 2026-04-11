@@ -59,6 +59,8 @@ export default function InvoiceHistory({
   subscriptionId,
   limit = 12,
 }: InvoiceHistoryProps) {
+  const backendBaseUrl =
+    process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/$/, '') || 'http://localhost:5000';
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,11 +71,11 @@ export default function InvoiceHistory({
         setLoading(true);
         setError(null);
 
-        let url = '/api/invoices';
+        let url = `${backendBaseUrl}/api/invoices`;
         if (subscriptionId) {
-          url = `/api/invoices/subscription/${subscriptionId}?limit=${limit}`;
+          url = `${backendBaseUrl}/api/invoices/subscription/${encodeURIComponent(subscriptionId)}?limit=${limit}`;
         } else if (userId) {
-          url = `/api/invoices?limit=${limit}`;
+          url = `${backendBaseUrl}/api/invoices?limit=${limit}`;
         }
 
         const response = await fetch(url, {
@@ -81,12 +83,25 @@ export default function InvoiceHistory({
         });
 
         if (!response.ok) {
+          if (response.status === 404) {
+            // The invoices API is not available in this frontend workspace.
+            setInvoices([]);
+            return;
+          }
+
           throw new Error(`Failed to fetch invoices: ${response.statusText}`);
         }
 
         const data = await response.json();
         setInvoices(data.data || []);
       } catch (err) {
+        if (err instanceof TypeError) {
+          // Network/CORS/backend unavailable: keep UI usable without noisy console errors.
+          setInvoices([]);
+          setError(null);
+          return;
+        }
+
         const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
         setError(errorMessage);
         console.error('Error fetching invoices:', err);
@@ -100,8 +115,17 @@ export default function InvoiceHistory({
 
   const handleViewInvoice = async (invoiceId: string) => {
     try {
-      const response = await fetch(`/api/invoices/${invoiceId}`);
-      if (!response.ok) throw new Error('Failed to fetch invoice');
+      const response = await fetch(
+        `${backendBaseUrl}/api/invoices/${encodeURIComponent(invoiceId)}`
+      );
+      if (!response.ok) {
+        if (response.status === 404) {
+          alert('Invoice service is currently unavailable');
+          return;
+        }
+
+        throw new Error('Failed to fetch invoice');
+      }
 
       const data = await response.json();
       const invoice = data.data;
@@ -112,6 +136,11 @@ export default function InvoiceHistory({
         alert('Invoice URL not available');
       }
     } catch (error) {
+      if (error instanceof TypeError) {
+        alert('Invoice service is currently unavailable');
+        return;
+      }
+
       alert('Failed to view invoice');
       console.error('Error viewing invoice:', error);
     }
