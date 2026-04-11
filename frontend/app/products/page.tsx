@@ -14,12 +14,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Search } from 'lucide-react'
+import { Search, Coffee } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 import type { Category, Product } from '@/lib/types'
 
 export default function ProductsPage() {
-  // States từ nhánh chị Nhi (Dùng dữ liệu thật)
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
@@ -28,7 +28,6 @@ export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [sortBy, setSortBy] = useState('featured')
 
-  // Logic gọi API từ nhánh chị Nhi
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -54,7 +53,6 @@ export default function ProductsPage() {
     loadData()
   }, [])
 
-  // Logic lọc và sắp xếp sản phẩm
   const filteredProducts = useMemo(() => {
     let result = [...products]
 
@@ -99,16 +97,15 @@ export default function ProductsPage() {
       <Header />
 
       {/* Page Header */}
-      <div className="bg-primary text-primary-foreground py-6 px-4">
+      <div className="bg-[#3E2723] text-[#C5A059] py-6 px-4">
         <div className="container mx-auto">
-          <h1 className="text-2xl md:text-3xl font-bold uppercase">Shop Our Coffee</h1>
+          <h1 className="text-2xl md:text-3xl font-bold uppercase tracking-widest">Shop Our Coffee</h1>
         </div>
       </div>
 
       <div className="flex-1">
         <div className="container mx-auto px-4 py-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            {/* Sidebar (Từ nhánh chị Anh) */}
             <div className="md:col-span-1">
               {/* Search */}
               <div className="mb-6">
@@ -119,14 +116,14 @@ export default function ProductsPage() {
                     placeholder="Search..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 rounded-full border-gray-300 focus:ring-[#C5A059] focus:border-[#C5A059]"
                   />
                 </div>
               </div>
 
               {/* Categories */}
               <div className="border border-border rounded-lg overflow-hidden">
-                <div className="bg-muted px-4 py-3 font-medium text-sm">CATEGORIES</div>
+                <div className="bg-[#3E2723] text-white px-4 py-3 font-semibold text-sm uppercase tracking-wider">CATEGORIES</div>
                 <CategorySidebar
                   categories={categories}
                   selectedCategory={selectedCategory}
@@ -139,11 +136,11 @@ export default function ProductsPage() {
             <div className="md:col-span-3">
               {/* Top Bar */}
               <div className="flex justify-between items-center mb-6">
-                <p className="text-sm text-muted-foreground">
-                  Showing {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
+                <p className="text-sm text-muted-foreground font-medium">
+                  Showing <span className="text-[#3E2723] font-bold">{filteredProducts.length}</span> {filteredProducts.length === 1 ? 'product' : 'products'}
                 </p>
                 <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-48">
+                  <SelectTrigger className="w-48 rounded-full border-gray-300 focus:ring-[#C5A059]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -156,10 +153,11 @@ export default function ProductsPage() {
                 </Select>
               </div>
 
-              {/* Products Grid với Loading State của chị Nhi */}
+              {/* Products Grid */}
               {loading ? (
-                <div className="py-16 text-center text-muted-foreground">
-                  Loading products...
+                <div className="py-16 text-center text-muted-foreground flex flex-col items-center justify-center">
+                   <Coffee className="h-10 w-10 animate-spin text-[#C5A059] mb-4" />
+                   <p className="font-medium tracking-wider uppercase text-[#3E2723]">Brewing products...</p>
                 </div>
               ) : filteredProducts.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
@@ -168,10 +166,24 @@ export default function ProductsPage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-16">
-                  <p className="text-muted-foreground text-lg">
-                    No products found. Try adjusting your filters.
+                <div className="text-center py-16 bg-muted/30 rounded-2xl border border-dashed border-gray-300">
+                  <Coffee className="h-12 w-12 text-gray-400 mx-auto mb-4 opacity-50" />
+                  <p className="text-[#3E2723] font-medium text-lg">
+                    No products found.
                   </p>
+                  <p className="text-muted-foreground text-sm mt-1">
+                    Try adjusting your search or filter criteria.
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    className="mt-6 rounded-full border-[#C5A059] text-[#C5A059] hover:bg-[#C5A059] hover:text-white"
+                    onClick={() => {
+                      setSearchQuery('')
+                      setSelectedCategory('all')
+                    }}
+                  >
+                    Clear Filters
+                  </Button>
                 </div>
               )}
             </div>

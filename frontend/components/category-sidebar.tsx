@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Category } from '@/lib/store'
+import type { Category } from '@/lib/types' // Đã sửa lại để lấy type chuẩn từ Database
 
 interface CategorySidebarProps {
   categories: Category[]

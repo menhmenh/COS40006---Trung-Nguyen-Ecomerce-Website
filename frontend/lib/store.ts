@@ -1,4 +1,4 @@
-// Hardcoded data store for the coffee shop
+
 
 export interface Product {
   id: string
@@ -34,6 +34,7 @@ export interface User {
   password: string
   name: string
   createdAt: Date
+  role?: string
 }
 
 export interface Order {
@@ -41,14 +42,17 @@ export interface Order {
   userId: string
   items: CartItem[]
   total: number
-  status: 'pending' | 'completed' | 'cancelled'
+  status: 'pending' | 'completed' | 'cancelled' | 'delivered' | 'shipped' | 'paid' | 'packed' | 'refunded'
   createdAt: Date
+  orderCode?: string
 }
 
 export interface CartItem {
   productId: string
   quantity: number
   price: number
+  productName?: string
+  image?: string
 }
 
 export const categories: Category[] = [
@@ -58,7 +62,7 @@ export const categories: Category[] = [
     slug: 'coffee',
     children: [
       { id: '1-1', name: 'Cà phê chuyên biệt', slug: 'specialty-coffee', parentId: '1' },
-      { id: '1-2', name: 'Cà phê Rắng xay', slug: 'ground-coffee', parentId: '1' },
+      { id: '1-2', name: 'Cà phê Rang xay', slug: 'ground-coffee', parentId: '1' },
       { id: '1-3', name: 'Cà phê Hòa tan', slug: 'instant-coffee', parentId: '1' },
     ],
   },
@@ -94,7 +98,7 @@ export const products: Product[] = [
     name: 'Cà phê G7 Gold Piccaso Latte hộp 8 gói',
     category: 'g7-gold',
     price: 53620,
-    description: 'Mang phong vị cà la cà phê Piccaso Latte tật không giản. Thế giới Cà phê Trung Nguyên Legend với vị béo, chất đắng nhẹ hòa lẫn hương vanilla ngọt dịu và lộp foam gây.',
+    description: 'Mang phong vị cà phê Piccaso Latte tinh tế. Cà phê Trung Nguyên Legend với vị béo, chất đắng nhẹ hòa lẫn hương vanilla ngọt dịu và lớp foam dày.',
     image: '/products/double-espresso.png',
     badge: '-10%',
     rating: 4.9,
@@ -105,7 +109,7 @@ export const products: Product[] = [
     packaging: '8 sticks x 18gr',
     expiry: '2 năm kể từ ngày sản xuất',
     origin: 'Việt Nam',
-    specifications: 'Độ đậm 5.5%. Thành phần: Bột kem (có chứa sữa), đường, aldextrin, cà phê hòa tan (5%), cà phê rang xay nhuyễn (5%), muối ớt, bột dâu nành, hương liệu Cà Phê công ngoài dùng trong thực phẩm.',
+    specifications: 'Độ đậm 5.5%. Thành phần: Bột kem (có chứa sữa), đường, aldextrin, cà phê hòa tan (5%), cà phê rang xay nhuyễn (5%), muối ớt, bột dâu nành, hương liệu.',
     usage: 'Hòa một gói cà phê hòa tan G7 vào 80ml nước nóng (80°C-100°C), khuấy đều và thưởng thức.',
   },
   {
@@ -148,10 +152,10 @@ export const products: Product[] = [
   },
   {
     id: '4',
-    name: 'Cà Phê Hòa Tan Sáy Lạnh Trung Nguyên',
+    name: 'Cà Phê Hòa Tan Sấy Lạnh Trung Nguyên',
     category: 'instant-coffee',
     price: 202954,
-    description: 'Cà phê hòa tan sáy lạnh với công nghệ bảo quản tươi mới.',
+    description: 'Cà phê hòa tan sấy lạnh với công nghệ bảo quản tươi mới.',
     image: '/products/latte.png',
     badge: '-14%',
     rating: 4.6,
@@ -170,7 +174,7 @@ export const products: Product[] = [
     name: 'Trung Nguyên Legend Americano hộp 15 gói',
     category: 'g7-legend',
     price: 108335,
-    description: 'Dòng cà phê cao cấp Legend với vị Americano đỏc đáo, mang lại trải nghiệm thưởng thức đầy tinh tế.',
+    description: 'Dòng cà phê cao cấp Legend với vị Americano độc đáo, mang lại trải nghiệm thưởng thức đầy tinh tế.',
     image: '/products/mocha-frappe.png',
     badge: '-10%',
     rating: 4.8,
@@ -207,7 +211,7 @@ export const products: Product[] = [
     name: 'Cà phê chuyên biệt Arabica Đắk Lắk',
     category: 'specialty-coffee',
     price: 185000,
-    description: 'Cà phê Arabica cao cấp từ vùng đất mầu mỡ Đắk Lắk, hương thơm tự nhiên độc đáo.',
+    description: 'Cà phê Arabica cao cấp từ vùng đất màu mỡ Đắk Lắk, hương thơm tự nhiên độc đáo.',
     image: '/products/vanilla-gelato.png',
     badge: '-15%',
     rating: 4.7,
@@ -293,7 +297,7 @@ export const products: Product[] = [
     expiry: '1.5 năm',
     origin: 'Việt Nam - Đắk Nông',
     specifications: 'Độ đậm 7.5%. Robusta nguyên chất, rang trung bình.',
-    usage: 'Pha phin hoặc máy pha, thích hợp cho cà phê nâu đặc đao.',
+    usage: 'Pha phin hoặc máy pha, thích hợp cho cà phê nâu đậm đà.',
   },
   {
     id: '12',
@@ -316,20 +320,14 @@ export const products: Product[] = [
   },
 ]
 
-// In-memory storage
+// In-memory storage (Dự phòng)
 export let users: User[] = [
   {
     id: 'user_1',
-    email: 'demo@alowishus.com',
-    password: 'demo123',
-    name: 'Demo User',
-    createdAt: new Date(),
-  },
-  {
-    id: 'user_2',
-    email: 'admin@alowishus.com',
-    password: 'admin123',
-    name: 'Admin User',
+    email: 'admin.demo@trungnguyen.com',
+    password: 'admin',
+    name: 'Admin System',
+    role: 'admin',
     createdAt: new Date(),
   },
 ]

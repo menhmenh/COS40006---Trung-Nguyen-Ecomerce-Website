@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import Link from 'next/link'
+import { trackMultiplePurchases } from '@/lib/recommendations'
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -21,7 +22,7 @@ export default function CheckoutPage() {
   const { toast } = useToast()
   const [isProcessing, setIsProcessing] = useState(false)
 
-  // 1. THÊM STATE ĐỂ BẬT/TẮT MODAL
+  // STATE ĐỂ BẬT/TẮT MODAL (Từ nhánh HEAD)
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
 
   const [formData, setFormData] = useState({
@@ -85,7 +86,7 @@ export default function CheckoutPage() {
       return
     }
 
-    // 2. TÌM LẤY ĐỊA CHỈ ĐANG ĐƯỢC CHỌN (TICK RADIO)
+    // TÌM LẤY ĐỊA CHỈ ĐANG ĐƯỢC CHỌN (TICK RADIO)
     const activeAddress = addresses.find((addr) => addr.id === selectedAddress)
     
     if (!activeAddress || !activeAddress.address || !activeAddress.city) {
@@ -109,7 +110,6 @@ export default function CheckoutPage() {
             productId: item.productId,
             quantity: item.quantity,
           })),
-          // 3. GỬI ĐÚNG DỮ LIỆU ĐỊA CHỈ MÀ USER ĐÃ NHẬP
           shippingAddress: {
             fullName: activeAddress.fullName || formData.name,
             phone: activeAddress.phone || formData.phone,
@@ -123,6 +123,19 @@ export default function CheckoutPage() {
       if (!response.ok) {
         throw new Error('Failed to create order')
       }
+
+      // --- LOGIC CỦA CHANH: Lưu lịch sử mua hàng để gợi ý sản phẩm ---
+      await trackMultiplePurchases(
+        user.id,
+        items.map((item) => {
+          const product = products.find((p) => p.id === item.productId)
+          return {
+            productId: item.productId,
+            categoryId: product?.category || '',
+          }
+        })
+      )
+      // -------------------------------------------------------------
 
       clearCart()
 
@@ -193,7 +206,6 @@ export default function CheckoutPage() {
                 ))}
               </div>
               
-              {/* 4. GẮN SỰ KIỆN ONCLICK ĐỂ MỞ MODAL */}
               <Button 
                 type="button" 
                 variant="outline" 
@@ -289,6 +301,29 @@ export default function CheckoutPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Giữ lại option Chuyển khoản của Chanh */}
+                <div
+                  onClick={() => setSelectedPayment('bank')}
+                  className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                    selectedPayment === 'bank'
+                      ? 'border-primary bg-background'
+                      : 'border-border hover:border-primary'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="radio"
+                      name="payment"
+                      checked={selectedPayment === 'bank'}
+                      onChange={() => setSelectedPayment('bank')}
+                    />
+                    <div>
+                      <p className="font-medium">Chuyển khoản ngân hàng</p>
+                      <p className="text-sm text-muted-foreground">Chuyển tiền trước khi giao hàng</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -378,13 +413,18 @@ export default function CheckoutPage() {
                   <span className="text-muted-foreground">Phí vận chuyển</span>
                   <span className="font-medium">Miễn phí</span>
                 </div>
+                {/* Giữ lại VAT của Chanh */}
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Thuế VAT (10%)</span>
+                  <span className="font-medium">{(total * 0.1).toLocaleString('vi-VN')}đ</span>
+                </div>
               </div>
 
               <div className="border-t border-border mt-4 pt-4">
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-bold">Tổng cộng</span>
                   <span className="text-3xl font-bold text-primary">
-                    {total.toLocaleString('vi-VN')}đ
+                    {(total * 1.1).toLocaleString('vi-VN')}đ
                   </span>
                 </div>
               </div>
@@ -393,7 +433,6 @@ export default function CheckoutPage() {
         </div>
       </div>
       
-      {/* 5. GỌI MODAL RA GIAO DIỆN */}
       <AddressModal
         open={isAddressModalOpen}
         onOpenChange={setIsAddressModalOpen}

@@ -1,21 +1,25 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
+import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { ProductCard } from '@/components/product-card'
-import { Star, Utensils, Coffee, IceCream, ChevronLeft, ChevronRight } from 'lucide-react'
+import { RecommendedProducts } from '@/components/recommended-products'
+import { SubscriptionShowcase } from '@/components/sections/subscription-showcase'
+import { Star, Utensils, Coffee, ChevronLeft, ChevronRight } from 'lucide-react'
 import { listProducts } from '@/lib/server-data'
 import type { Product } from '@/lib/types'
 
 export default async function Home() {
+  // Lấy dữ liệu thật từ Database (Code của nhánh main)
   const products = await listProducts()
   const bestSellers = products.slice(0, 3)
 
   return (
     <div className="min-h-screen">
-   
+      <Header />
 
-    {/* Hero Section */}
+      {/* Hero Section */}
       <section className="bg-muted py-12 md:py-20 overflow-hidden">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -28,7 +32,6 @@ export default async function Home() {
                 "The coffee of great persons, inspiring creativity and energy on the journey of awakening."
               </p>
               
-              {/* Rating Section - Giữ lại nhưng làm nhẹ nhàng hơn */}
               <div className="flex items-center gap-3 mb-10">
                 <div className="flex">
                   {[1, 2, 3, 4, 5].map((star) => (
@@ -52,11 +55,10 @@ export default async function Home() {
               </div>
             </div>
 
-            {/* Image Section với hiệu ứng đổ bóng nhẹ */}
-            <div className="relative h-[450px] md:h-[600px] flex items-center justify-center">
-              <div className="absolute inset-0 bg-[#C5A059]/5 rounded-full blur-3xl" /> {/* Ánh sáng vàng nhẹ phía sau ảnh */}
+            <div className="relative h-[30rem] md:h-[40rem] flex items-center justify-center">
+              <div className="absolute inset-0 bg-[#C5A059]/5 rounded-full blur-3xl" /> 
               <Image
-                src="/ca-phe-phin-loc-giay-trung-nguyen.png" 
+                src="/placeholder.svg" 
                 alt="Trung Nguyen Coffee"
                 fill
                 className="object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-700"
@@ -67,7 +69,7 @@ export default async function Home() {
         </div>
       </section>
 
-{/* Signature Collections Section */}
+      {/* Signature Collections Section */}
       <section className="py-16 md:py-24 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
@@ -80,7 +82,6 @@ export default async function Home() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {/* Packaged Coffee */}
             <div className="text-center p-10 bg-muted rounded-full border-b-4 border-transparent hover:border-[#C5A059] transition-all duration-300 shadow-sm hover:shadow-xl group">
               <div className="flex justify-center mb-8">
                 <Coffee className="h-20 w-20 text-[#3E2723] group-hover:scale-110 transition-transform duration-500" />
@@ -96,7 +97,6 @@ export default async function Home() {
               </Link>
             </div>
 
-            {/* Brewing Equipment */}
             <div className="text-center p-10 bg-muted rounded-full border-b-4 border-transparent hover:border-[#C5A059] transition-all duration-300 shadow-sm hover:shadow-xl group">
               <div className="flex justify-center mb-8">
                 <Utensils className="h-20 w-20 text-[#3E2723] group-hover:scale-110 transition-transform duration-500" />
@@ -112,7 +112,6 @@ export default async function Home() {
               </Link>
             </div>
 
-            {/* Life-changing Books */}
             <div className="text-center p-10 bg-muted rounded-full border-b-4 border-transparent hover:border-[#C5A059] transition-all duration-300 shadow-sm hover:shadow-xl group">
               <div className="flex justify-center mb-8">
                 <Star className="h-20 w-20 text-[#3E2723] group-hover:scale-110 transition-transform duration-500" />
@@ -131,22 +130,20 @@ export default async function Home() {
         </div>
       </section>
 
-{/* Order Favorite Coffee - The Energy Coffee Section */}
-      <section className="py-16 bg-muted"> {/* Sử dụng màu kem nền của Trung Nguyên */}
+      {/* Order Favorite Coffee */}
+      <section className="py-16 bg-muted">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 items-center">
-            {/* Hình ảnh sản phẩm đặc trưng */}
-            <div className="relative h-[450px] group">
+            <div className="relative h-[30rem] group">
               <div className="absolute inset-0 bg-[#C5A059]/10 rounded-full blur-3xl group-hover:bg-[#C5A059]/20 transition-colors duration-500" />
               <Image
-                src="/trung-nguyen-store.png"  
+                src="/placeholder.svg"  
                 alt="Trung Nguyen Energy Coffee"
                 fill
                 className="object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-700"
               />
             </div>
 
-            {/* Nội dung mời gọi */}
             <div>
               <h2 className="text-4xl md:text-5xl font-bold mb-6 text-[#3E2723] uppercase tracking-tight leading-tight">
                 Experience Your <br />
@@ -173,7 +170,7 @@ export default async function Home() {
         </div>
       </section>
 
-{/* Best Selling Coffee - Top Energy Choices */}
+      {/* Best Selling Coffee */}
       <section className="py-16 md:py-24 bg-white">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
@@ -185,14 +182,10 @@ export default async function Home() {
             </p>
           </div>
 
-          {/* Grid hiển thị sản phẩm */}
           <div className="grid md:grid-cols-3 gap-8">
             {bestSellers.map((product: Product) => (
               <div key={product.id} className="group">
                 <ProductCard product={product} />
-                {/* Lưu ý: Nếu bạn muốn ProductCard cũng có phong cách Trung Nguyên, 
-                   chúng ta sẽ cần vào file ProductCard để sửa nút "Add to cart" thành màu Nâu/Vàng.
-                */}
               </div>
             ))}
           </div>
@@ -210,8 +203,11 @@ export default async function Home() {
         </div>
       </section>
 
-{/* Instant Coffee - G7 & Legend Special Edition */}
-      <section className="py-16 bg-white"> {/* Đổi bg-muted sang trắng để làm nổi bật hình ảnh sản phẩm */}
+      {/* Coffee Monthly Box - Component của nhánh Chanh */}
+      <SubscriptionShowcase />
+
+      {/* Instant Coffee */}
+      <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="order-2 md:order-1">
@@ -227,18 +223,16 @@ export default async function Home() {
                 <Button className="bg-[#3E2723] hover:bg-[#2A1B18] text-white rounded-full px-8 py-6 text-xs font-bold tracking-widest uppercase">
                   SHOP G7 COLLECTIONS
                 </Button>
-                {/* Giữ lại ý tưởng App nếu bạn muốn, nhưng chuyển sang phong cách Trung Nguyên */}
                 <Button variant="outline" className="border-[#3E2723] text-[#3E2723] rounded-full px-8 py-6 text-xs font-bold tracking-widest uppercase bg-transparent">
                   DOWNLOAD MEMBERSHIP APP
                 </Button>
               </div>
             </div>
 
-            <div className="relative h-[450px] order-1 md:order-2">
-              {/* Hiệu ứng trang trí phía sau sản phẩm */}
+            <div className="relative h-[30rem] order-1 md:order-2">
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[#C5A059]/5 rounded-full blur-3xl" />
               <Image
-                src="/g7-coffee-display.png" 
+                src="/placeholder.svg" 
                 alt="G7 Instant Coffee"
                 fill
                 className="object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-700"
@@ -249,14 +243,14 @@ export default async function Home() {
         </div>
       </section>
 
-{/* Testimonials - Inspiring Experiences */}
-      <section className="py-16 md:py-24 bg-white"> {/* Sử dụng nền kem đồng bộ */}
+      {/* Testimonials */}
+      <section className="py-16 md:py-24 bg-white">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-12 items-center mb-16">
             <div className="grid grid-cols-2 gap-4">
               <div className="aspect-square bg-[#3E2723] rounded-none overflow-hidden relative shadow-2xl">
                 <Image
-                  src="/images/testimonial-1.png" // Thay bằng ảnh không gian quán hoặc khách hàng sang trọng
+                  src="/placeholder.svg"
                   alt="Legendary Experience"
                   fill
                   className="object-cover opacity-80 hover:opacity-100 transition-opacity"
@@ -264,7 +258,7 @@ export default async function Home() {
               </div>
               <div className="aspect-square bg-[#C5A059] rounded-none overflow-hidden relative shadow-2xl mt-8">
                 <Image
-                  src="/images/testimonial-2.png" 
+                  src="/placeholder.svg" 
                   alt="Coffee Moments"
                   fill
                   className="object-cover opacity-80 hover:opacity-100 transition-opacity"
@@ -300,7 +294,6 @@ export default async function Home() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-8">
-            {/* Review 1 */}
             <div className="bg-white p-10 rounded-none border-l-4 border-[#C5A059] shadow-sm hover:shadow-md transition-shadow">
               <div className="flex mb-4">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -313,7 +306,6 @@ export default async function Home() {
               </p>
             </div>
 
-            {/* Review 2 */}
             <div className="bg-white p-10 rounded-none border-l-4 border-[#C5A059] shadow-sm hover:shadow-md transition-shadow">
               <div className="flex mb-4">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -326,6 +318,13 @@ export default async function Home() {
               </p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Recommended Products Component */}
+      <section className="py-16 md:py-24 bg-muted">
+        <div className="container mx-auto px-4">
+          <RecommendedProducts limit={8} />
         </div>
       </section>
 

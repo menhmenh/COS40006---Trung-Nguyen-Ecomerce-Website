@@ -8,13 +8,13 @@ import { Input } from '@/components/ui/input'
 
 function Footer() {
   return (
-    <footer className="bg-[#3E2723] text-white py-16 mt-24">
+    <footer className="bg-[#3E2723] text-white py-16 mt-24 animate-fade-in-up">
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
           
           {/* Brand & Mission */}
-          <div className="space-y-6">
-            <div className="relative w-32 h-16">
+          <div className="space-y-6 animate-fade-in-up">
+            <div className="relative w-32 h-16 hover:scale-110 transition-transform">
               <Image 
                 src="/trung-nguyen-logo.png" 
                 alt="Trung Nguyen Legend" 
@@ -26,31 +26,31 @@ function Footer() {
               Trung Nguyen Legend - The leading coffee brand in Vietnam. We are on a mission to bring energy coffee to the world, inspiring creativity and awakening the soul.
             </p>
             <div className="flex gap-4">
-              <Link href="https://www.facebook.com/trungnguyenlegendcafe" className="p-2 bg-[#3E2723] hover:bg-[#C5A059] transition-colors rounded-none">
+              <Link href="https://www.facebook.com/trungnguyenlegendcafe" className="p-2 bg-[#3E2723] hover:bg-[#C5A059] transition-colors rounded-none hover:scale-110 transform">
                 <Facebook className="h-4 w-4" />
               </Link>
-              <Link href="#" className="p-2 bg-[#3E2723] hover:bg-[#C5A059] transition-colors rounded-none">
+              <Link href="#" className="p-2 bg-[#3E2723] hover:bg-[#C5A059] transition-colors rounded-none hover:scale-110 transform">
                 <Instagram className="h-4 w-4" />
               </Link>
-              <Link href="#" className="p-2 bg-[#3E2723] hover:bg-[#C5A059] transition-colors rounded-none">
+              <Link href="#" className="p-2 bg-[#3E2723] hover:bg-[#C5A059] transition-colors rounded-none hover:scale-110 transform">
                 <Twitter className="h-4 w-4" />
               </Link>
             </div>
           </div>
 
           {/* Contact Information */}
-          <div>
+          <div className="animate-fade-in-up" style={{animationDelay: '0.1s'}}>
             <h3 className="text-[#C5A059] font-bold uppercase tracking-widest text-sm mb-6">Contact Us</h3>
             <div className="space-y-4 text-sm text-zinc-400">
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-3 transition-smooth hover:text-[#C5A059] hover:translate-x-1">
                 <MapPin className="h-5 w-5 text-[#C5A059] shrink-0" />
                 <span>87A Cach Mang Thang 8, Ben Thanh Ward, District 1, Ho Chi Minh City, Vietnam.</span>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 transition-smooth hover:text-[#C5A059] hover:translate-x-1">
                 <Mail className="h-4 w-4 text-[#C5A059]" />
                 <span>trungnguyenlegendmaps@gmail.com</span>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 transition-smooth hover:text-[#C5A059] hover:translate-x-1">
                 <Phone className="h-4 w-4 text-[#C5A059]" />
                 <span>1900 969668</span>
               </div>
@@ -58,19 +58,19 @@ function Footer() {
           </div>
 
           {/* Customer Support */}
-          <div>
+          <div className="animate-fade-in-up" style={{animationDelay: '0.2s'}}>
             <h3 className="text-[#C5A059] font-bold uppercase tracking-widest text-sm mb-6">Support</h3>
             <ul className="space-y-3 text-sm text-zinc-400">
-              <li><Link href="#" className="hover:text-[#C5A059] transition-colors">Order Tracking</Link></li>
-              <li><Link href="#" className="hover:text-[#C5A059] transition-colors">Privacy Policy</Link></li>
-              <li><Link href="#" className="hover:text-[#C5A059] transition-colors">Shipping & Delivery</Link></li>
-              <li><Link href="#" className="hover:text-[#C5A059] transition-colors">Return & Refund Policy</Link></li>
-              <li><Link href="#" className="hover:text-[#C5A059] transition-colors">Franchising Opportunities</Link></li>
+              <li><Link href="#" className="hover:text-[#C5A059] transition-smooth hover:translate-x-1 inline-block">Order Tracking</Link></li>
+              <li><Link href="#" className="hover:text-[#C5A059] transition-smooth hover:translate-x-1 inline-block">Privacy Policy</Link></li>
+              <li><Link href="#" className="hover:text-[#C5A059] transition-smooth hover:translate-x-1 inline-block">Shipping & Delivery</Link></li>
+              <li><Link href="#" className="hover:text-[#C5A059] transition-smooth hover:translate-x-1 inline-block">Return & Refund Policy</Link></li>
+              <li><Link href="#" className="hover:text-[#C5A059] transition-smooth hover:translate-x-1 inline-block">Franchising Opportunities</Link></li>
             </ul>
           </div>
 
           {/* Newsletter */}
-          <div>
+          <div className="animate-fade-in-up" style={{animationDelay: '0.3s'}}>
             <h3 className="text-[#C5A059] font-bold uppercase tracking-widest text-sm mb-6">Get Inspiration</h3>
             <p className="text-zinc-400 text-sm mb-4">
               Subscribe to receive the latest news about coffee culture and special offers.

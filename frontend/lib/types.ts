@@ -1,4 +1,5 @@
 export type Product = {
+  sku?: string;
   id: string
   categoryId: string
   category: string
@@ -11,6 +12,13 @@ export type Product = {
   badge?: string
   rating: number
   reviews: number
+  brand?: string;
+  unit?: string;
+  packaging?: string;
+  expiry?: string;
+  origin?: string;
+  specifications?: string;
+  usage?: string;
 }
 
 export type Category = {
@@ -18,6 +26,7 @@ export type Category = {
   name: string
   slug: string
   description?: string | null
+  children?: Category[];
 }
 
 export type CartItem = {

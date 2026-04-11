@@ -1,5 +1,7 @@
 'use client'
 
+import React from "react"
+import { useRouter } from 'next/navigation'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { useCart } from '@/lib/cart-context'
@@ -17,10 +19,10 @@ export default function CartPage() {
       <div className="min-h-screen flex flex-col">
         <Header />
         <div className="flex-1 container mx-auto px-4 py-16 text-center mt-12">
-          <h1 className="text-3xl font-bold mb-4">Your Cart is Empty</h1>
-          <p className="text-muted-foreground mb-8">Looks like you haven't added any coffee yet.</p>
+          <h1 className="text-3xl font-bold mb-4">Giỏ hàng của bạn trống</h1>
+          <p className="text-muted-foreground mb-8">Có vẻ như bạn chưa thêm sản phẩm nào.</p>
           <Link href="/products">
-            <Button className="rounded-full px-8 py-6 text-lg">SHOP COFFEE</Button>
+            <Button className="rounded-full px-8 py-6 text-lg">MUA CÀ PHÊ</Button>
           </Link>
         </div>
         <Footer />
@@ -34,9 +36,9 @@ export default function CartPage() {
 
       <div className="flex-1 container mx-auto px-4 py-12">
         <div className="flex items-center gap-4 mb-8">
-          <h1 className="text-4xl font-bold">Shopping Cart</h1>
+          <h1 className="text-4xl font-bold">Giỏ Hàng</h1>
           <span className="bg-muted text-muted-foreground px-3 py-1 rounded-full text-sm font-medium">
-            {items.length} {items.length === 1 ? 'item' : 'items'}
+            {items.length} {items.length === 1 ? 'sản phẩm' : 'sản phẩm'}
           </span>
         </div>
 
@@ -61,7 +63,7 @@ export default function CartPage() {
                     </h3>
                   </Link>
                   <p className="text-sm text-muted-foreground mb-4">
-                    ${item.price.toFixed(2)} each
+                    {item.price.toLocaleString('vi-VN')}đ / sản phẩm
                   </p>
 
                   <div className="flex items-center gap-3">
@@ -95,7 +97,7 @@ export default function CartPage() {
 
                 <div className="text-right sm:ml-auto">
                   <div className="font-bold text-xl">
-                    ${(item.price * item.quantity).toFixed(2)}
+                    {(item.price * item.quantity).toLocaleString('vi-VN')}đ
                   </div>
                 </div>
               </div>
@@ -105,42 +107,41 @@ export default function CartPage() {
           {/* Order Summary */}
           <div>
             <div className="bg-muted rounded-2xl p-6 sticky top-24">
-              <h2 className="text-2xl font-bold mb-6">Order Summary</h2>
+              <h2 className="text-2xl font-bold mb-6">Tóm tắt đơn hàng</h2>
 
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Subtotal</span>
-                  <span className="font-medium">${total.toFixed(2)}</span>
+                  <span className="text-muted-foreground">Tổng tiền hàng</span>
+                  <span className="font-medium">{total.toLocaleString('vi-VN')}đ</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Shipping</span>
-                  <span className="font-medium">Free</span>
+                  <span className="text-muted-foreground">Phí vận chuyển</span>
+                  <span className="font-medium">Miễn phí</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Tax (10%)</span>
-                  <span className="font-medium">${(total * 0.1).toFixed(2)}</span>
+                  <span className="text-muted-foreground">Thuế VAT (10%)</span>
+                  <span className="font-medium">{(total * 0.1).toLocaleString('vi-VN')}đ</span>
                 </div>
               </div>
 
               <div className="border-t border-border mt-4 pt-4 mb-6">
                 <div className="flex justify-between items-center">
-                  <span className="text-lg font-bold">Total</span>
+                  <span className="text-lg font-bold">Tổng cộng</span>
                   <span className="text-3xl font-bold text-primary">
-                    ${(total * 1.1).toFixed(2)}
+                    {(total * 1.1).toLocaleString('vi-VN')}đ
                   </span>
                 </div>
               </div>
 
               <Link href="/checkout" className="block">
                 <Button className="w-full rounded-full py-6 text-lg font-medium bg-primary text-primary-foreground">
-                  PROCEED TO CHECKOUT
+                  TIẾN HÀNH THANH TOÁN
                 </Button>
               </Link>
             </div>
           </div>
         </div>
       </div>
-
       <Footer />
     </div>
   )

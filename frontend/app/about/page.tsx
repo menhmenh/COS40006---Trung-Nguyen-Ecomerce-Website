@@ -1,5 +1,6 @@
 'use client'
 
+import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import Image from 'next/image'
 import { useEffect, useRef } from 'react'
@@ -124,9 +125,11 @@ export default function AboutPage() {
   }, []);
 
   return (
-    <main className="bg-[#ffffff] min-h-screen">
-      {/* Header Section */}
-      <section className="py-20 bg-[#3E2723] text-center">
+    <>
+      <Header />
+      <main className="bg-[#ffffff] min-h-screen">
+        {/* Header Section */}
+        <section className="py-20 bg-[#3E2723] text-center">
         <h1 className="text-[#C5A059] text-5xl md:text-6xl font-bold uppercase tracking-widest mb-4">
           Development History
         </h1>
@@ -189,7 +192,7 @@ export default function AboutPage() {
                 className="w-full md:w-5/12 px-4 md:px-12 py-4 transition-all duration-700 ease-out opacity-0 translate-y-20"
                 style={{ transitionDelay: `${500}ms` }}
               >
-                <div className="relative h-[300px] md:h-[350px] w-full grayscale hover:grayscale-0 transition-all duration-700">
+                <div className="relative h-75 md:h-87.5 w-full grayscale hover:grayscale-0 transition-all duration-700">
                   <Image 
                     src={item.image} 
                     alt={item.year}
@@ -204,7 +207,8 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <Footer />
-    </main>
+        <Footer />
+      </main>
+    </>
   )
 }
