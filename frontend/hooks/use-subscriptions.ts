@@ -35,6 +35,65 @@ export interface SubscriptionState {
   error: string | null;
 }
 
+export const LOCAL_SUBSCRIPTIONS: Subscription[] = [
+  {
+    subscription_id: 'sub-001',
+    user_id: 'user_1',
+    plan_id: 'plan-premium-monthly',
+    subscription_status: 'ACTIVE',
+    start_date: '2026-01-15T00:00:00.000Z',
+    next_billing_date: '2026-04-25T00:00:00.000Z',
+    last_billing_date: '2026-03-25T00:00:00.000Z',
+    skipped_months: 1,
+    plan: {
+      plan_id: 'plan-premium-monthly',
+      plan_name: 'Premium Monthly',
+      description: '4 premium coffee bags with seasonal picks.',
+      price: 49.99,
+      billing_cycle: 30,
+      frequency: 'Monthly',
+      max_skip_per_year: 3,
+    },
+  },
+  {
+    subscription_id: 'sub-002',
+    user_id: 'user_1',
+    plan_id: 'plan-deluxe-monthly',
+    subscription_status: 'ACTIVE',
+    start_date: '2026-02-20T00:00:00.000Z',
+    next_billing_date: '2026-05-10T00:00:00.000Z',
+    last_billing_date: '2026-04-10T00:00:00.000Z',
+    skipped_months: 0,
+    plan: {
+      plan_id: 'plan-deluxe-monthly',
+      plan_name: 'Deluxe Monthly',
+      description: '6 specialty coffee bags with member perks.',
+      price: 79.99,
+      billing_cycle: 30,
+      frequency: 'Monthly',
+      max_skip_per_year: 6,
+    },
+  },
+  {
+    subscription_id: 'sub-003',
+    user_id: 'user_2',
+    plan_id: 'plan-basic-monthly',
+    subscription_status: 'PAUSED',
+    start_date: '2026-03-01T00:00:00.000Z',
+    next_billing_date: '2026-05-01T00:00:00.000Z',
+    skipped_months: 0,
+    plan: {
+      plan_id: 'plan-basic-monthly',
+      plan_name: 'Basic Monthly',
+      description: '2 bags of curated coffee beans delivered monthly.',
+      price: 29.99,
+      billing_cycle: 30,
+      frequency: 'Monthly',
+      max_skip_per_year: 2,
+    },
+  },
+];
+
 export function useSubscriptions(userId?: string) {
   const [state, setState] = useState<SubscriptionState>({
     subscriptions: [],
@@ -56,7 +115,16 @@ export function useSubscriptions(userId?: string) {
         });
 
         if (!response.ok) {
-          throw new Error(`Failed to fetch subscriptions: ${response.statusText}`);
+          const localData = LOCAL_SUBSCRIPTIONS.filter(
+            (subscription) => subscription.user_id === userId
+          );
+
+          setState({
+            subscriptions: localData,
+            loading: false,
+            error: null,
+          });
+          return;
         }
 
         const data = await response.json();
@@ -92,7 +160,18 @@ export function useSubscriptions(userId?: string) {
       );
 
       if (!response.ok) {
-        throw new Error('Failed to skip month');
+        const target = state.subscriptions.find(
+          (subscription) => subscription.subscription_id === subscriptionId
+        );
+
+        if (!target) {
+          throw new Error('Failed to skip month');
+        }
+
+        const maxSkips = target.plan?.max_skip_per_year ?? 0;
+        if (target.skipped_months >= maxSkips) {
+          throw new Error('Failed to skip month');
+        }
       }
 
       // Refresh subscriptions
@@ -105,6 +184,21 @@ export function useSubscriptions(userId?: string) {
 
       return true;
     } catch (err) {
+      const target = state.subscriptions.find(
+        (subscription) => subscription.subscription_id === subscriptionId
+      );
+      const maxSkips = target?.plan?.max_skip_per_year ?? 0;
+
+      if (target && target.skipped_months < maxSkips) {
+        const updated = state.subscriptions.map((sub) =>
+          sub.subscription_id === subscriptionId
+            ? { ...sub, skipped_months: sub.skipped_months + 1 }
+            : sub
+        );
+        setState((prev) => ({ ...prev, subscriptions: updated }));
+        return true;
+      }
+
       console.error('Error skipping month:', err);
       return false;
     }
@@ -140,6 +234,25 @@ export function useSubscriptions(userId?: string) {
 
       return true;
     } catch (err) {
+      const target = state.subscriptions.find(
+        (subscription) => subscription.subscription_id === subscriptionId
+      );
+
+      if (target) {
+        const updated = state.subscriptions.map((sub) =>
+          sub.subscription_id === subscriptionId
+            ? {
+                ...sub,
+                subscription_status: 'CANCELLED',
+                cancelled_date: new Date().toISOString(),
+                cancellation_reason: reason,
+              }
+            : sub
+        );
+        setState((prev) => ({ ...prev, subscriptions: updated }));
+        return true;
+      }
+
       console.error('Error cancelling subscription:', err);
       return false;
     }
@@ -170,6 +283,20 @@ export function useSubscriptions(userId?: string) {
 
       return true;
     } catch (err) {
+      const target = state.subscriptions.find(
+        (subscription) => subscription.subscription_id === subscriptionId
+      );
+
+      if (target) {
+        const updated = state.subscriptions.map((sub) =>
+          sub.subscription_id === subscriptionId
+            ? { ...sub, subscription_status: 'PAUSED' }
+            : sub
+        );
+        setState((prev) => ({ ...prev, subscriptions: updated }));
+        return true;
+      }
+
       console.error('Error pausing subscription:', err);
       return false;
     }

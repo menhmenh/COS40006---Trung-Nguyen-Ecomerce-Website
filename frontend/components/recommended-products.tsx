@@ -28,8 +28,24 @@ export function RecommendedProducts({ userId, limit = 10 }: RecommendationsProps
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isTopRated, setIsTopRated] = useState(false);
+  const [isApiFallback, setIsApiFallback] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [itemsPerView, setItemsPerView] = useState(4);
+
+  const getTopRatedProducts = () =>
+    products
+      .slice()
+      .sort((a, b) => b.rating - a.rating)
+      .slice(0, limit)
+      .map((product) => ({
+        product_id: product.id,
+        name: product.name,
+        price: product.price,
+        category_name: product.category,
+        description: product.description,
+        purchase_count: product.reviews,
+        avg_rating: product.rating,
+      }));
 
   // Update items per view based on screen size
   useEffect(() => {
@@ -53,6 +69,7 @@ export function RecommendedProducts({ userId, limit = 10 }: RecommendationsProps
       try {
         setLoading(true);
         setError(null);
+        setIsApiFallback(false);
 
         if (!userId) {
           setError('User ID not provided');
@@ -61,39 +78,39 @@ export function RecommendedProducts({ userId, limit = 10 }: RecommendationsProps
         }
 
         const response = await fetch(
-          `/api/recommendations?user_id=${userId}&limit=${limit}`
+          `/api/recommendations?user_id=${encodeURIComponent(userId)}&limit=${limit}`
         );
 
         if (!response.ok) {
-          throw new Error('Failed to fetch recommendations');
+          // Gracefully degrade to local top-rated products when API is unavailable.
+          setRecommendations(getTopRatedProducts());
+          setIsTopRated(true);
+          setIsApiFallback(true);
+          setCurrentIndex(0);
+          return;
         }
 
         const data = await response.json();
         
         // If no personalized recommendations, show top-rated products
         if (!data.recommendations || data.recommendations.length === 0) {
-          const topRatedProducts = products
-            .sort((a, b) => b.rating - a.rating)
-            .slice(0, limit)
-            .map((product) => ({
-              product_id: product.id,
-              name: product.name,
-              price: product.price,
-              category_name: product.category,
-              description: product.description,
-              purchase_count: product.reviews,
-              avg_rating: product.rating,
-            }));
-          setRecommendations(topRatedProducts);
+          setRecommendations(getTopRatedProducts());
           setIsTopRated(true);
+          setIsApiFallback(Boolean(data.fallback));
         } else {
           setRecommendations(data.recommendations);
           setIsTopRated(false);
+          setIsApiFallback(false);
         }
         setCurrentIndex(0);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-        console.error('Error fetching recommendations:', err);
+        // Final safety net: still show top-rated products for a better UX.
+        setRecommendations(getTopRatedProducts());
+        setIsTopRated(true);
+        setIsApiFallback(true);
+        setError(null);
+        setCurrentIndex(0);
+        console.error('Error fetching recommendations. Showing fallback products:', err);
       } finally {
         setLoading(false);
       }
@@ -157,6 +174,11 @@ export function RecommendedProducts({ userId, limit = 10 }: RecommendationsProps
             ? 'Popular products with high ratings' 
             : 'Based on your shopping history and preferences'}
         </p>
+        {isApiFallback && (
+          <p className="mt-2 text-sm text-amber-700">
+            Personalized recommendations are temporarily unavailable. Showing popular picks for now.
+          </p>
+        )}
       </div>
 
       {error && (

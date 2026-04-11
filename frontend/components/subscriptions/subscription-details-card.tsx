@@ -10,7 +10,7 @@ import { Calendar, Pause, Play, Gift, TrendingUp, AlertCircle, CheckCircle } fro
 import Link from 'next/link';
 
 interface Subscription {
-  id: string;
+  subscription_id: string;
   planName: string;
   price: number;
   status: 'active' | 'paused' | 'cancelled';
@@ -70,7 +70,7 @@ export function SubscriptionDetailsCard({ subscription }: { subscription: Subscr
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.5, ease: 'easeOut' },
+      transition: { duration: 0.5, ease: 'easeOut' as const },
     },
     hover: {
       y: -4,
@@ -120,7 +120,7 @@ export function SubscriptionDetailsCard({ subscription }: { subscription: Subscr
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
+                transition={{ delay: 0.3, type: 'spring' as const, stiffness: 200 }}
               >
                 <Badge
                   variant={getStatusBadgeVariant()}
@@ -267,7 +267,7 @@ export function SubscriptionDetailsCard({ subscription }: { subscription: Subscr
                 </Button>
               </motion.div>
 
-              <Link href={`/subscriptions/${subscription.id}`} className="block">
+              <Link href={`/subscriptions/${subscription.subscription_id}`} className="block">
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Button variant="ghost" className="w-full border-2">
                     View Details

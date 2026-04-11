@@ -33,7 +33,7 @@ export function SubscriptionCard({ plan }: { plan: SubscriptionPlan }) {
       y: 0,
       transition: {
         duration: 0.5,
-        ease: 'easeOut',
+        ease: 'easeOut' as const,
       },
     },
     hover: {
@@ -50,7 +50,7 @@ export function SubscriptionCard({ plan }: { plan: SubscriptionPlan }) {
       transition: {
         delay: 0.3,
         duration: 0.4,
-        type: 'spring',
+        type: 'spring' as const,
         stiffness: 200,
       },
     },

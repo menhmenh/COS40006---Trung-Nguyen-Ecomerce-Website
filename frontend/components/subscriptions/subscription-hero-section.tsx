@@ -12,7 +12,7 @@ export function SubscriptionHeroSection() {
       opacity: 1,
       transition: {
         duration: 0.5,
-        ease: 'easeOut',
+        ease: 'easeOut' as const,
       },
     },
   };
@@ -24,7 +24,7 @@ export function SubscriptionHeroSection() {
       y: 0,
       transition: {
         duration: 0.6,
-        ease: 'easeOut',
+        ease: 'easeOut' as const,
       },
     },
   };
@@ -38,7 +38,7 @@ export function SubscriptionHeroSection() {
       transition: {
         delay: 0.3,
         duration: 0.6,
-        ease: 'easeOut',
+        ease: 'easeOut' as const,
       },
     },
     hover: {

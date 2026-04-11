@@ -5,10 +5,12 @@ import { SubscriptionDetailsCard } from '@/components/subscriptions/subscription
 import { Button } from '@/components/ui/button';
 import { Coffee, Plus, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
+import { Header } from '@/components/header';
+import { Footer } from '@/components/footer';
 
 const USER_SUBSCRIPTIONS = [
   {
-    id: 'sub-001',
+    subscription_id: 'sub-001',
     planName: 'Premium Monthly',
     price: 49.99,
     status: 'active' as const,
@@ -19,7 +21,7 @@ const USER_SUBSCRIPTIONS = [
     maxSkipPerYear: 3,
   },
   {
-    id: 'sub-002',
+    subscription_id: 'sub-002',
     planName: 'Deluxe Monthly',
     price: 79.99,
     status: 'active' as const,
@@ -65,18 +67,20 @@ export default function SubscriptionsPage() {
   };
 
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="min-h-screen bg-linear-to-br from-slate-50 via-white to-slate-50"
-    >
+    <>
+      <Header />
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="min-h-screen bg-linear-to-br from-stone-50 via-amber-50/20 to-stone-100"
+      >
       {/* Header */}
       <motion.div
         variants={headerVariants}
         initial="hidden"
         animate="visible"
-        className="relative overflow-hidden bg-linear-to-r from-amber-600 to-orange-600 text-white"
+        className="relative overflow-hidden bg-linear-to-r from-stone-700 via-amber-800 to-stone-800 text-amber-50"
       >
         {/* Animated background */}
         <motion.div
@@ -111,7 +115,7 @@ export default function SubscriptionsPage() {
               <Coffee className="size-10" />
               <h1 className="text-4xl md:text-5xl font-bold">Your Subscriptions</h1>
             </motion.div>
-            <p className="text-orange-100 text-lg max-w-2xl mx-auto">
+            <p className="text-amber-100/90 text-lg max-w-2xl mx-auto">
               Manage all your coffee subscriptions in one place. View upcoming shipments, skip months, and adjust your preferences anytime.
             </p>
           </motion.div>
@@ -157,7 +161,7 @@ export default function SubscriptionsPage() {
                 whileHover={{ scale: 1.05 }}
               >
                 <div className="text-2xl font-bold text-white">{stat.number}</div>
-                <div className="text-xs text-orange-100 font-medium">{stat.label}</div>
+                <div className="text-xs text-amber-100/90 font-medium">{stat.label}</div>
               </motion.div>
             ))}
           </motion.div>
@@ -193,7 +197,7 @@ export default function SubscriptionsPage() {
 
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Link href="/subscriptions/plans">
-                    <Button className="bg-linear-to-r from-amber-500 to-orange-500 text-white px-6 py-3 rounded-lg hover:shadow-lg">
+                    <Button className="bg-linear-to-r from-stone-700 to-amber-700 text-amber-50 px-6 py-3 rounded-lg hover:shadow-lg">
                       <Plus className="mr-2 size-5" />
                       Add New Plan
                     </Button>
@@ -219,7 +223,7 @@ export default function SubscriptionsPage() {
               >
                 {USER_SUBSCRIPTIONS.map((subscription) => (
                   <SubscriptionDetailsCard
-                    key={subscription.id}
+                    key={subscription.subscription_id}
                     subscription={subscription}
                   />
                 ))}
@@ -231,9 +235,9 @@ export default function SubscriptionsPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              className="mt-16 p-8 bg-linear-to-r from-green-50 to-emerald-50 rounded-2xl border-2 border-green-200"
+              className="mt-16 p-8 bg-linear-to-r from-stone-100 to-amber-100 rounded-2xl border-2 border-amber-200"
             >
-              <h3 className="text-2xl font-bold text-green-900 mb-6">Member Benefits</h3>
+              <h3 className="text-2xl font-bold text-stone-900 mb-6">Member Benefits</h3>
               <div className="grid md:grid-cols-2 gap-6">
                 {[
                   {
@@ -266,8 +270,8 @@ export default function SubscriptionsPage() {
                     whileHover={{ scale: 1.05 }}
                   >
                     <div className="text-3xl mb-2">{benefit.icon}</div>
-                    <h4 className="font-bold text-green-900">{benefit.title}</h4>
-                    <p className="text-sm text-green-800">{benefit.desc}</p>
+                    <h4 className="font-bold text-stone-900">{benefit.title}</h4>
+                    <p className="text-sm text-stone-700">{benefit.desc}</p>
                   </motion.div>
                 ))}
               </div>
@@ -295,7 +299,7 @@ export default function SubscriptionsPage() {
             </p>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link href="/subscriptions/plans">
-                <Button className="bg-linear-to-r from-amber-500 to-orange-500 text-white px-8 py-6 text-base font-bold rounded-lg hover:shadow-lg">
+                <Button className="bg-linear-to-r from-stone-700 to-amber-700 text-amber-50 px-8 py-6 text-base font-bold rounded-lg hover:shadow-lg">
                   <Coffee className="mr-2 size-5" />
                   Explore Subscription Plans
                 </Button>
@@ -305,5 +309,7 @@ export default function SubscriptionsPage() {
         )}
       </div>
     </motion.div>
+    <Footer />
+  </>
   );
 }

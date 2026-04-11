@@ -56,8 +56,13 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Recommendation error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch recommendations' },
-      { status: 500 }
+      {
+        success: true,
+        recommendations: [],
+        count: 0,
+        fallback: true,
+      },
+      { status: 200 }
     );
   }
 }

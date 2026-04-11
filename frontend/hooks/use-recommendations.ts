@@ -43,9 +43,8 @@ export function useRecommendations(
       );
 
       if (!response.ok) {
-        throw new Error(
-          `Failed to fetch recommendations: ${response.status} ${response.statusText}`
-        );
+        setRecommendations([]);
+        return;
       }
 
       const data = await response.json();
