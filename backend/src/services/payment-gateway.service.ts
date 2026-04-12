@@ -1,8 +1,3 @@
-/**
- * Payment Gateway Service - Stripe Integration
- * Handles all payment processing for subscriptions
- */
-
 import Stripe from 'stripe';
 import * as sql from 'mssql';
 import { getPool } from '../config/database';
@@ -15,39 +10,38 @@ interface PaymentIntent {
   error?: string;
 }
 
-interface CustomerData {
-  stripeCustomerId: string;
-  userId: string;
-  email: string;
-}
-
 export class PaymentGatewayService {
-  private stripe: Stripe;
+  private stripe: Stripe | null;
 
   constructor() {
     const apiKey = process.env.STRIPE_API_KEY;
-    if (!apiKey) {
-      throw new Error('STRIPE_API_KEY environment variable is not set');
-    }
-    this.stripe = new Stripe(apiKey);
+    this.stripe = apiKey ? new Stripe(apiKey) : null;
   }
 
-  /**
-   * Create a Stripe customer for a user
-   */
+  private getStripe(): Stripe {
+    if (!this.stripe) {
+      throw new Error('STRIPE_API_KEY environment variable is not set');
+    }
+
+    return this.stripe;
+  }
+
+  async getCustomer(stripeCustomerId: string) {
+    return this.getStripe().customers.retrieve(stripeCustomerId);
+  }
+
   async createStripeCustomer(
     userId: string,
     email: string,
-    name?: string
+    name?: string,
   ): Promise<string> {
     try {
-      const customer = await this.stripe.customers.create({
+      const customer = await this.getStripe().customers.create({
         email,
         name: name || `Customer ${userId}`,
         metadata: { userId },
       });
 
-      // Store Stripe customer ID in database
       const pool = await getPool();
       await pool
         .request()
@@ -74,18 +68,13 @@ export class PaymentGatewayService {
     }
   }
 
-  /**
-   * Get or create a Stripe customer for a user
-   */
   async getOrCreateStripeCustomer(
     userId: string,
     email: string,
-    name?: string
+    name?: string,
   ): Promise<string> {
     try {
       const pool = await getPool();
-
-      // Check if customer already exists
       const existingCustomer = await pool
         .request()
         .input('user_id', sql.Char(36), userId)
@@ -94,15 +83,11 @@ export class PaymentGatewayService {
           WHERE user_id = @user_id AND stripe_customer_id IS NOT NULL
         `);
 
-      if (
-        existingCustomer.recordset &&
-        existingCustomer.recordset.length > 0 &&
-        existingCustomer.recordset[0].stripe_customer_id
-      ) {
-        return existingCustomer.recordset[0].stripe_customer_id;
+      const stripeCustomerId = existingCustomer.recordset?.[0]?.stripe_customer_id;
+      if (stripeCustomerId) {
+        return stripeCustomerId;
       }
 
-      // Create new customer if doesn't exist
       return await this.createStripeCustomer(userId, email, name);
     } catch (error) {
       console.error('Error getting or creating Stripe customer:', error);
@@ -110,21 +95,18 @@ export class PaymentGatewayService {
     }
   }
 
-  /**
-   * Add a payment method (card) for a customer
-   */
   async addPaymentMethod(
     stripeCustomerId: string,
-    paymentMethodToken: string
+    paymentMethodToken: string,
   ): Promise<string> {
     try {
-      // Attach payment method to customer
-      await this.stripe.paymentMethods.attach(paymentMethodToken, {
+      const stripe = this.getStripe();
+
+      await stripe.paymentMethods.attach(paymentMethodToken, {
         customer: stripeCustomerId,
       });
 
-      // Set as default payment method
-      await this.stripe.customers.update(stripeCustomerId, {
+      await stripe.customers.update(stripeCustomerId, {
         invoice_settings: {
           default_payment_method: paymentMethodToken,
         },
@@ -137,19 +119,31 @@ export class PaymentGatewayService {
     }
   }
 
-  /**
-   * Process a payment for a subscription
-   */
+  async setDefaultPaymentMethod(
+    stripeCustomerId: string,
+    paymentMethodId: string,
+  ): Promise<void> {
+    try {
+      await this.getStripe().customers.update(stripeCustomerId, {
+        invoice_settings: {
+          default_payment_method: paymentMethodId,
+        },
+      });
+    } catch (error) {
+      console.error('Error setting default payment method:', error);
+      throw error;
+    }
+  }
+
   async processSubscriptionPayment(
     subscriptionOrderId: string,
     amount: number,
     stripeCustomerId: string,
-    currency: string = 'USD'
+    currency: string = 'USD',
   ): Promise<PaymentIntent> {
     try {
-      // Create payment intent
-      const paymentIntent = await this.stripe.paymentIntents.create({
-        amount: Math.round(amount * 100), // Convert to cents
+      const paymentIntent = await this.getStripe().paymentIntents.create({
+        amount: Math.round(amount * 100),
         currency: currency.toLowerCase(),
         customer: stripeCustomerId,
         metadata: {
@@ -160,7 +154,6 @@ export class PaymentGatewayService {
         },
       });
 
-      // Update subscription order with payment intent
       const pool = await getPool();
       await pool
         .request()
@@ -187,12 +180,9 @@ export class PaymentGatewayService {
     }
   }
 
-  /**
-   * Confirm a payment intent
-   */
   async confirmPaymentIntent(paymentIntentId: string): Promise<PaymentIntent> {
     try {
-      const paymentIntent = await this.stripe.paymentIntents.retrieve(paymentIntentId);
+      const paymentIntent = await this.getStripe().paymentIntents.retrieve(paymentIntentId);
 
       return {
         id: paymentIntent.id,
@@ -209,14 +199,9 @@ export class PaymentGatewayService {
     }
   }
 
-  /**
-   * Handle successful payment webhook
-   */
   async handlePaymentSucceeded(paymentIntentId: string): Promise<void> {
     try {
       const pool = await getPool();
-
-      // Get the subscription order by payment intent
       const orderResult = await pool
         .request()
         .input('stripe_payment_intent', sql.NVarChar(100), paymentIntentId)
@@ -226,17 +211,13 @@ export class PaymentGatewayService {
           WHERE stripe_payment_intent = @stripe_payment_intent
         `);
 
-      if (
-        !orderResult.recordset ||
-        orderResult.recordset.length === 0
-      ) {
+      if (!orderResult.recordset || orderResult.recordset.length === 0) {
         console.warn(`No subscription order found for payment intent ${paymentIntentId}`);
         return;
       }
 
       const order = orderResult.recordset[0];
 
-      // Update order status to PAID
       await pool
         .request()
         .input('subscription_order_id', sql.Char(36), order.subscription_order_id)
@@ -251,27 +232,18 @@ export class PaymentGatewayService {
               updated_date = GETUTCDATE()
           WHERE subscription_order_id = @subscription_order_id
         `);
-
-      console.log(
-        `✅ Payment succeeded for subscription order: ${order.subscription_order_id}`
-      );
     } catch (error) {
       console.error('Error handling payment success:', error);
       throw error;
     }
   }
 
-  /**
-   * Handle failed payment webhook
-   */
   async handlePaymentFailed(
     paymentIntentId: string,
-    errorMessage: string
+    errorMessage: string,
   ): Promise<void> {
     try {
       const pool = await getPool();
-
-      // Get the subscription order by payment intent
       const orderResult = await pool
         .request()
         .input('stripe_payment_intent', sql.NVarChar(100), paymentIntentId)
@@ -287,11 +259,8 @@ export class PaymentGatewayService {
       }
 
       const order = orderResult.recordset[0];
-
-      // Increment retry count
       const newRetryCount = (order.retry_count || 0) + 1;
 
-      // Update order status to FAILED
       await pool
         .request()
         .input('subscription_order_id', sql.Char(36), order.subscription_order_id)
@@ -308,22 +277,15 @@ export class PaymentGatewayService {
               updated_date = GETUTCDATE()
           WHERE subscription_order_id = @subscription_order_id
         `);
-
-      console.error(
-        `❌ Payment failed for subscription order: ${order.subscription_order_id} - ${errorMessage}`
-      );
     } catch (error) {
       console.error('Error handling payment failure:', error);
       throw error;
     }
   }
 
-  /**
-   * List payment methods for a customer
-   */
   async listPaymentMethods(stripeCustomerId: string): Promise<any[]> {
     try {
-      const paymentMethods = await this.stripe.paymentMethods.list({
+      const paymentMethods = await this.getStripe().paymentMethods.list({
         customer: stripeCustomerId,
         type: 'card',
       });
@@ -335,25 +297,18 @@ export class PaymentGatewayService {
     }
   }
 
-  /**
-   * Delete a payment method
-   */
   async deletePaymentMethod(paymentMethodId: string): Promise<void> {
     try {
-      await this.stripe.paymentMethods.detach(paymentMethodId);
-      console.log(`✅ Payment method ${paymentMethodId} deleted`);
+      await this.getStripe().paymentMethods.detach(paymentMethodId);
     } catch (error) {
       console.error('Error deleting payment method:', error);
       throw error;
     }
   }
 
-  /**
-   * Refund a payment
-   */
   async refundPayment(paymentIntentId: string, amount?: number): Promise<string> {
     try {
-      const refund = await this.stripe.refunds.create({
+      const refund = await this.getStripe().refunds.create({
         payment_intent: paymentIntentId,
         amount: amount ? Math.round(amount * 100) : undefined,
       });

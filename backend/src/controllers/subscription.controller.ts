@@ -36,10 +36,22 @@ export class SubscriptionController {
   async getSubscriptionById(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        res.status(401).json({ error: 'User not authenticated' });
+        return;
+      }
+
       const subscription = await subscriptionService.getSubscriptionById(id);
 
       if (!subscription) {
         res.status(404).json({ error: 'Subscription not found' });
+        return;
+      }
+
+      if (subscription.user_id !== userId) {
+        res.status(403).json({ error: 'Unauthorized' });
         return;
       }
 

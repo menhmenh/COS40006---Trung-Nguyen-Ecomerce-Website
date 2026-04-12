@@ -1,8 +1,3 @@
-/**
- * Payment Routes - Stripe Payment Processing
- * Handles payment processing, webhooks, and payment method management
- */
-
 import express, { Router } from 'express';
 import { authenticate } from '../middleware/auth.middleware';
 import { paymentGatewayService } from '../services/payment-gateway.service';
@@ -12,10 +7,6 @@ import * as sql from 'mssql';
 
 const router = Router();
 
-/**
- * POST /api/payments/setup-payment-method
- * Setup a new payment method for a subscription
- */
 router.post(
   '/setup-payment-method',
   authenticate,
@@ -33,19 +24,13 @@ router.post(
       const userId = (req as any).user.id;
       const email = (req as any).user.email;
       const name = (req as any).user.name;
-
-      // Get or create Stripe customer
       const stripeCustomerId = await paymentGatewayService.getOrCreateStripeCustomer(
         userId,
         email,
-        name
+        name,
       );
 
-      // Add payment method to customer
-      await paymentGatewayService.addPaymentMethod(
-        stripeCustomerId,
-        paymentMethodToken
-      );
+      await paymentGatewayService.addPaymentMethod(stripeCustomerId, paymentMethodToken);
 
       res.json({
         success: true,
@@ -59,13 +44,9 @@ router.post(
         error: error.message || 'Failed to setup payment method',
       });
     }
-  }
+  },
 );
 
-/**
- * GET /api/payments/payment-methods
- * Get all payment methods for the current user
- */
 router.get(
   '/payment-methods',
   authenticate,
@@ -74,7 +55,6 @@ router.get(
       const userId = (req as any).user.id;
       const pool = await getPool();
 
-      // Get Stripe customer ID
       const customerResult = await pool
         .request()
         .input('user_id', sql.Char(36), userId)
@@ -83,33 +63,32 @@ router.get(
           WHERE user_id = @user_id AND stripe_customer_id IS NOT NULL
         `);
 
-      if (!customerResult.recordset?.[0]?.stripe_customer_id) {
-        return res.json({ success: true, paymentMethods: [] });
+      const stripeCustomerId = customerResult.recordset?.[0]?.stripe_customer_id;
+      if (!stripeCustomerId) {
+        return res.json({ success: true, data: [] });
       }
 
-      const stripeCustomerId = customerResult.recordset[0].stripe_customer_id;
-      const paymentMethods = await paymentGatewayService.listPaymentMethods(
-        stripeCustomerId
-      );
+      const paymentMethods = await paymentGatewayService.listPaymentMethods(stripeCustomerId);
+      const customer = await paymentGatewayService.getCustomer(stripeCustomerId);
+      const defaultPaymentMethod =
+        typeof customer === 'object' &&
+        !('deleted' in customer) &&
+        typeof customer.invoice_settings?.default_payment_method === 'string'
+          ? customer.invoice_settings.default_payment_method
+          : null;
 
-      // Format payment methods for response
       const formatted = paymentMethods.map((pm: any) => ({
-        id: pm.id,
-        type: pm.type,
-        card: pm.card
-          ? {
-              brand: pm.card.brand,
-              last4: pm.card.last4,
-              expMonth: pm.card.exp_month,
-              expYear: pm.card.exp_year,
-            }
-          : null,
-        created: pm.created,
+        payment_method_id: pm.id,
+        stripe_payment_method_id: pm.id,
+        card_brand: pm.card?.brand || 'card',
+        card_last4: pm.card?.last4 || '0000',
+        is_default: defaultPaymentMethod === pm.id,
+        created_date: new Date(pm.created * 1000).toISOString(),
       }));
 
       res.json({
         success: true,
-        paymentMethods: formatted,
+        data: formatted,
       });
     } catch (error: any) {
       console.error('Error fetching payment methods:', error);
@@ -118,13 +97,50 @@ router.get(
         error: error.message || 'Failed to fetch payment methods',
       });
     }
-  }
+  },
 );
 
-/**
- * DELETE /api/payments/payment-methods/:paymentMethodId
- * Delete a payment method
- */
+router.put(
+  '/payment-methods/:paymentMethodId/default',
+  authenticate,
+  async (req: express.Request, res: express.Response) => {
+    try {
+      const { paymentMethodId } = req.params;
+      const userId = (req as any).user.id;
+      const pool = await getPool();
+
+      const customerResult = await pool
+        .request()
+        .input('user_id', sql.Char(36), userId)
+        .query(`
+          SELECT stripe_customer_id FROM dbo.payment_methods
+          WHERE user_id = @user_id AND stripe_customer_id IS NOT NULL
+        `);
+
+      const stripeCustomerId = customerResult.recordset?.[0]?.stripe_customer_id;
+      if (!stripeCustomerId) {
+        return res.status(404).json({
+          success: false,
+          error: 'Stripe customer not found',
+        });
+      }
+
+      await paymentGatewayService.setDefaultPaymentMethod(stripeCustomerId, paymentMethodId);
+
+      res.json({
+        success: true,
+        message: 'Default payment method updated successfully',
+      });
+    } catch (error: any) {
+      console.error('Error setting default payment method:', error);
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Failed to set default payment method',
+      });
+    }
+  },
+);
+
 router.delete(
   '/payment-methods/:paymentMethodId',
   authenticate,
@@ -145,13 +161,9 @@ router.delete(
         error: error.message || 'Failed to delete payment method',
       });
     }
-  }
+  },
 );
 
-/**
- * POST /api/payments/process-payment
- * Process a single payment for a subscription order
- */
 router.post(
   '/process-payment',
   authenticate,
@@ -168,8 +180,6 @@ router.post(
       }
 
       const pool = await getPool();
-
-      // Verify the order belongs to the user
       const orderResult = await pool
         .request()
         .input('subscription_order_id', sql.Char(36), subscriptionOrderId)
@@ -189,7 +199,6 @@ router.post(
         });
       }
 
-      // Retry the payment
       const success = await billingService.retryFailedCharge(subscriptionOrderId);
 
       res.json({
@@ -203,69 +212,43 @@ router.post(
         error: error.message || 'Failed to process payment',
       });
     }
-  }
+  },
 );
 
-/**
- * POST /api/payments/webhook
- * Stripe webhook endpoint for payment events
- */
 router.post('/webhook', async (req: express.Request, res: express.Response) => {
   try {
-    const sig = req.headers['stripe-signature'] as string;
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
     if (!webhookSecret) {
-      console.error('STRIPE_WEBHOOK_SECRET not configured');
       return res.status(400).json({ success: false, error: 'Webhook not configured' });
     }
 
     let event;
 
-    // Verify webhook signature
     try {
-      event = JSON.parse(req.body);
-      // In production, verify the signature:
-      // const hash = crypto
-      //   .createHmac('sha256', webhookSecret)
-      //   .update(req.body)
-      //   .digest('hex');
-      // if (hash !== sig.split(',')[0].split('=')[1]) {
-      //   throw new Error('Invalid signature');
-      // }
+      event = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
     } catch (error) {
       console.error('Webhook signature verification failed:', error);
       return res.status(400).json({ success: false, error: 'Invalid signature' });
     }
 
-    // Handle different event types
     switch (event.type) {
       case 'payment_intent.succeeded':
-        console.log('💳 Payment succeeded:', event.data.object.id);
         await paymentGatewayService.handlePaymentSucceeded(event.data.object.id);
         break;
-
       case 'payment_intent.payment_failed':
-        console.log('❌ Payment failed:', event.data.object.id);
         await paymentGatewayService.handlePaymentFailed(
           event.data.object.id,
-          event.data.object.last_payment_error?.message || 'Payment failed'
+          event.data.object.last_payment_error?.message || 'Payment failed',
         );
         break;
-
       case 'payment_intent.canceled':
-        console.log('🚫 Payment canceled:', event.data.object.id);
-        await paymentGatewayService.handlePaymentFailed(
-          event.data.object.id,
-          'Payment canceled'
-        );
+        await paymentGatewayService.handlePaymentFailed(event.data.object.id, 'Payment canceled');
         break;
-
       default:
-        console.log(`⚠️  Unhandled event type: ${event.type}`);
+        console.log(`Unhandled event type: ${event.type}`);
     }
 
-    // Acknowledge receipt of event
     res.json({ success: true, received: true });
   } catch (error) {
     console.error('Webhook processing error:', error);
@@ -276,10 +259,6 @@ router.post('/webhook', async (req: express.Request, res: express.Response) => {
   }
 });
 
-/**
- * GET /api/payments/billing-history/:subscriptionId
- * Get billing history for a subscription
- */
 router.get(
   '/billing-history/:subscriptionId',
   authenticate,
@@ -289,7 +268,6 @@ router.get(
       const { subscriptionId } = req.params;
       const pool = await getPool();
 
-      // Verify subscription belongs to user
       const subResult = await pool
         .request()
         .input('subscription_id', sql.Char(36), subscriptionId)
@@ -319,13 +297,9 @@ router.get(
         error: error.message || 'Failed to fetch billing history',
       });
     }
-  }
+  },
 );
 
-/**
- * POST /api/payments/refund
- * Request a refund for a payment
- */
 router.post(
   '/refund',
   authenticate,
@@ -342,8 +316,6 @@ router.post(
       }
 
       const pool = await getPool();
-
-      // Verify order belongs to user and get payment intent
       const orderResult = await pool
         .request()
         .input('subscription_order_id', sql.Char(36), subscriptionOrderId)
@@ -379,13 +351,11 @@ router.post(
         });
       }
 
-      // Process refund
       const refundId = await paymentGatewayService.refundPayment(
         order.stripe_payment_intent,
-        amount
+        amount,
       );
 
-      // Update order status
       await pool
         .request()
         .input('subscription_order_id', sql.Char(36), subscriptionOrderId)
@@ -413,7 +383,7 @@ router.post(
         error: error.message || 'Failed to process refund',
       });
     }
-  }
+  },
 );
 
 export default router;

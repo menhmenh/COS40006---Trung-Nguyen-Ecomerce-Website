@@ -10,6 +10,69 @@ import {
 } from '../models/subscription.model';
 
 export class SubscriptionService {
+  private mapSubscriptionRecord(record: any): ISubscription & { plan?: ISubscriptionPlan } {
+    return {
+      subscription_id: record.subscription_id,
+      user_id: record.user_id,
+      plan_id: record.plan_id,
+      subscription_status: record.subscription_status,
+      start_date: record.start_date,
+      next_billing_date: record.next_billing_date,
+      last_billing_date: record.last_billing_date,
+      cancelled_date: record.cancelled_date,
+      cancellation_reason: record.cancellation_reason,
+      payment_method_id: record.payment_method_id,
+      delivery_address_id: record.delivery_address_id,
+      skipped_months: record.skipped_months,
+      created_date: record.created_date,
+      updated_date: record.updated_date,
+      plan: record.plan_plan_id
+        ? {
+            plan_id: record.plan_plan_id,
+            plan_name: record.plan_name,
+            description: record.plan_description,
+            price: Number(record.plan_price || 0),
+            billing_cycle: record.plan_billing_cycle,
+            frequency: record.plan_frequency,
+            max_skip_per_year: record.plan_max_skip_per_year,
+            status: record.plan_status,
+            created_date: record.plan_created_date,
+            updated_date: record.plan_updated_date,
+            created_by: record.plan_created_by,
+          }
+        : undefined,
+    };
+  }
+
+  private async getSubscriptionWithPlan(subscriptionId: string): Promise<(ISubscription & { plan?: ISubscriptionPlan }) | null> {
+    const pool = await getPool();
+    const result = await pool
+      .request()
+      .input('subscription_id', sql.NVarChar(36), subscriptionId)
+      .query(`
+        SELECT
+          s.*,
+          p.plan_id AS plan_plan_id,
+          p.plan_name,
+          p.description AS plan_description,
+          p.price AS plan_price,
+          p.billing_cycle AS plan_billing_cycle,
+          p.frequency AS plan_frequency,
+          p.max_skip_per_year AS plan_max_skip_per_year,
+          p.status AS plan_status,
+          p.created_date AS plan_created_date,
+          p.updated_date AS plan_updated_date,
+          p.created_by AS plan_created_by
+        FROM dbo.subscriptions s
+        LEFT JOIN dbo.subscription_plans p ON p.plan_id = s.plan_id
+        WHERE s.subscription_id = @subscription_id;
+      `);
+
+    return result.recordset.length > 0
+      ? this.mapSubscriptionRecord(result.recordset[0])
+      : null;
+  }
+
   /**
    * Create a new subscription
    */
@@ -44,7 +107,7 @@ export class SubscriptionService {
           SELECT * FROM dbo.subscriptions WHERE subscription_id = @subscription_id;
         `);
 
-      return result.recordset[0];
+      return (await this.getSubscriptionWithPlan(subscriptionId)) as ISubscription;
     } catch (error) {
       console.error('Error creating subscription:', error);
       throw error;
@@ -55,17 +118,8 @@ export class SubscriptionService {
    * Get subscription by ID
    */
   async getSubscriptionById(subscriptionId: string): Promise<ISubscription | null> {
-    const pool = await getPool();
-
     try {
-      const result = await pool
-        .request()
-        .input('subscription_id', sql.NVarChar(36), subscriptionId)
-        .query(`
-          SELECT * FROM dbo.subscriptions WHERE subscription_id = @subscription_id;
-        `);
-
-      return result.recordset.length > 0 ? result.recordset[0] : null;
+      return await this.getSubscriptionWithPlan(subscriptionId);
     } catch (error) {
       console.error('Error getting subscription:', error);
       throw error;
@@ -83,12 +137,26 @@ export class SubscriptionService {
         .request()
         .input('user_id', sql.NVarChar(36), userId)
         .query(`
-          SELECT * FROM dbo.subscriptions
+          SELECT
+            s.*,
+            p.plan_id AS plan_plan_id,
+            p.plan_name,
+            p.description AS plan_description,
+            p.price AS plan_price,
+            p.billing_cycle AS plan_billing_cycle,
+            p.frequency AS plan_frequency,
+            p.max_skip_per_year AS plan_max_skip_per_year,
+            p.status AS plan_status,
+            p.created_date AS plan_created_date,
+            p.updated_date AS plan_updated_date,
+            p.created_by AS plan_created_by
+          FROM dbo.subscriptions s
+          LEFT JOIN dbo.subscription_plans p ON p.plan_id = s.plan_id
           WHERE user_id = @user_id
-          ORDER BY created_date DESC;
+          ORDER BY s.created_date DESC;
         `);
 
-      return result.recordset;
+      return result.recordset.map((record) => this.mapSubscriptionRecord(record));
     } catch (error) {
       console.error('Error getting user subscriptions:', error);
       throw error;
@@ -127,7 +195,7 @@ export class SubscriptionService {
         .input('reason', sql.NVarChar(500), reason || null)
         .query(query);
 
-      return result.recordset[0];
+      return (await this.getSubscriptionWithPlan(subscriptionId)) as ISubscription;
     } catch (error) {
       console.error('Error updating subscription status:', error);
       throw error;
@@ -165,8 +233,8 @@ export class SubscriptionService {
         SELECT * FROM dbo.subscriptions WHERE subscription_id = @subscription_id;
       `;
 
-      const result = await request.query(query);
-      return result.recordset[0];
+      await request.query(query);
+      return (await this.getSubscriptionWithPlan(subscriptionId)) as ISubscription;
     } catch (error) {
       console.error('Error updating subscription:', error);
       throw error;
@@ -193,7 +261,7 @@ export class SubscriptionService {
           SELECT * FROM dbo.subscriptions WHERE subscription_id = @subscription_id;
         `);
 
-      return result.recordset[0];
+      return (await this.getSubscriptionWithPlan(subscriptionId)) as ISubscription;
     } catch (error) {
       console.error('Error skipping billing month:', error);
       throw error;

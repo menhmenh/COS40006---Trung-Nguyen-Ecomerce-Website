@@ -8,7 +8,9 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "seed": "ts-node src/scripts/seed-subscriptions.ts",
-    "migrate": "ts-node src/scripts/setup-database.ts"
+    "migrate": "ts-node src/scripts/setup-database.ts",
+    "smoke": "node ./tests/backend-health-smoke.mjs",
+    "test:integration": "node ./tests/subscription-flow.integration.mjs"
   },
   "keywords": [
     "subscription",

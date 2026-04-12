@@ -2,32 +2,10 @@ import sql from 'mssql';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
 
-// Create __dirname for ESM
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Load environment variables
 dotenv.config();
 
-interface SqlConfig {
-  server: string;
-  port: number;
-  authentication: {
-    type: string;
-    options: {
-      userName: string;
-      password: string;
-    };
-  };
-  options: {
-    trustServerCertificate: boolean;
-    enableKeepAlive: boolean;
-  };
-}
-
-const config: SqlConfig = {
+const config: sql.config = {
   server: process.env.DB_SERVER || 'localhost',
   port: parseInt(process.env.DB_PORT || '1433'),
   authentication: {
@@ -39,7 +17,6 @@ const config: SqlConfig = {
   },
   options: {
     trustServerCertificate: true,
-    enableKeepAlive: false,
   },
 };
 
@@ -77,7 +54,7 @@ async function setupDatabase() {
     await pool.close();
 
     // Now create a new pool with the subscription database
-    const dbConfig: SqlConfig = {
+    const dbConfig: sql.config = {
       server: process.env.DB_SERVER || 'localhost',
       database: dbName,
       port: parseInt(process.env.DB_PORT || '1433'),
@@ -90,9 +67,8 @@ async function setupDatabase() {
       },
       options: {
         trustServerCertificate: true,
-        enableKeepAlive: false,
       },
-    } as any;
+    };
 
     dbPool = new sql.ConnectionPool(dbConfig);
     console.log(`🔗 Connecting to database: ${dbName}...`);

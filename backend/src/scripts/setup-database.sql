@@ -4,10 +4,28 @@
 -- Drop existing tables and recreate (for fresh setup)
 -- Note: In production, use migrations instead
 
--- 1. Subscription Plans
-IF EXISTS (SELECT 1 FROM sys.tables WHERE name = 'subscription_plans')
+IF OBJECT_ID('dbo.payment_methods', 'U') IS NOT NULL
+  DROP TABLE dbo.payment_methods;
+
+IF OBJECT_ID('dbo.subscription_changes', 'U') IS NOT NULL
+  DROP TABLE dbo.subscription_changes;
+
+IF OBJECT_ID('dbo.subscription_skip_requests', 'U') IS NOT NULL
+  DROP TABLE dbo.subscription_skip_requests;
+
+IF OBJECT_ID('dbo.subscription_orders', 'U') IS NOT NULL
+  DROP TABLE dbo.subscription_orders;
+
+IF OBJECT_ID('dbo.subscription_items', 'U') IS NOT NULL
+  DROP TABLE dbo.subscription_items;
+
+IF OBJECT_ID('dbo.subscriptions', 'U') IS NOT NULL
+  DROP TABLE dbo.subscriptions;
+
+IF OBJECT_ID('dbo.subscription_plans', 'U') IS NOT NULL
   DROP TABLE dbo.subscription_plans;
 
+-- 1. Subscription Plans
 CREATE TABLE dbo.subscription_plans (
     plan_id CHAR(36) PRIMARY KEY,
     plan_name NVARCHAR(100) NOT NULL,
@@ -19,15 +37,13 @@ CREATE TABLE dbo.subscription_plans (
     status VARCHAR(20) DEFAULT 'ACTIVE',
     created_date DATETIME2 DEFAULT GETUTCDATE(),
     updated_date DATETIME2 DEFAULT GETUTCDATE(),
-    created_by CHAR(36),
-    INDEX idx_status (status),
-    INDEX idx_created_date (created_date)
+    created_by CHAR(36)
 );
 
--- 2. Subscriptions
-IF EXISTS (SELECT 1 FROM sys.tables WHERE name = 'subscriptions')
-  DROP TABLE dbo.subscriptions;
+CREATE INDEX idx_subscription_plans_status ON dbo.subscription_plans(status);
+CREATE INDEX idx_subscription_plans_created_date ON dbo.subscription_plans(created_date);
 
+-- 2. Subscriptions
 CREATE TABLE dbo.subscriptions (
     subscription_id CHAR(36) PRIMARY KEY,
     user_id CHAR(36) NOT NULL,
@@ -43,16 +59,14 @@ CREATE TABLE dbo.subscriptions (
     skipped_months INT DEFAULT 0,
     created_date DATETIME2 DEFAULT GETUTCDATE(),
     updated_date DATETIME2 DEFAULT GETUTCDATE(),
-    FOREIGN KEY (plan_id) REFERENCES dbo.subscription_plans(plan_id),
-    INDEX idx_user_subscription (user_id),
-    INDEX idx_next_billing (next_billing_date),
-    INDEX idx_status (subscription_status)
+    FOREIGN KEY (plan_id) REFERENCES dbo.subscription_plans(plan_id)
 );
 
--- 3. Subscription Items (monthly box contents)
-IF EXISTS (SELECT 1 FROM sys.tables WHERE name = 'subscription_items')
-  DROP TABLE dbo.subscription_items;
+CREATE INDEX idx_subscriptions_user ON dbo.subscriptions(user_id);
+CREATE INDEX idx_subscriptions_next_billing_date ON dbo.subscriptions(next_billing_date);
+CREATE INDEX idx_subscriptions_status ON dbo.subscriptions(subscription_status);
 
+-- 3. Subscription Items (monthly box contents)
 CREATE TABLE dbo.subscription_items (
     subscription_item_id CHAR(36) PRIMARY KEY,
     subscription_id CHAR(36) NOT NULL,
@@ -63,15 +77,13 @@ CREATE TABLE dbo.subscription_items (
     customization NVARCHAR(MAX),
     created_date DATETIME2 DEFAULT GETUTCDATE(),
     updated_date DATETIME2 DEFAULT GETUTCDATE(),
-    FOREIGN KEY (subscription_id) REFERENCES dbo.subscriptions(subscription_id),
-    INDEX idx_subscription (subscription_id),
-    INDEX idx_month (month_number)
+    FOREIGN KEY (subscription_id) REFERENCES dbo.subscriptions(subscription_id)
 );
 
--- 4. Subscription Orders (billing records)
-IF EXISTS (SELECT 1 FROM sys.tables WHERE name = 'subscription_orders')
-  DROP TABLE dbo.subscription_orders;
+CREATE INDEX idx_subscription_items_subscription ON dbo.subscription_items(subscription_id);
+CREATE INDEX idx_subscription_items_month_number ON dbo.subscription_items(month_number);
 
+-- 4. Subscription Orders (billing records)
 CREATE TABLE dbo.subscription_orders (
     subscription_order_id CHAR(36) PRIMARY KEY,
     subscription_id CHAR(36) NOT NULL,
@@ -86,16 +98,14 @@ CREATE TABLE dbo.subscription_orders (
     error_message NVARCHAR(MAX),
     created_date DATETIME2 DEFAULT GETUTCDATE(),
     updated_date DATETIME2 DEFAULT GETUTCDATE(),
-    FOREIGN KEY (subscription_id) REFERENCES dbo.subscriptions(subscription_id),
-    INDEX idx_subscription (subscription_id),
-    INDEX idx_charge_date (charge_date),
-    INDEX idx_payment_status (payment_status)
+    FOREIGN KEY (subscription_id) REFERENCES dbo.subscriptions(subscription_id)
 );
 
--- 5. Subscription Skip Requests
-IF EXISTS (SELECT 1 FROM sys.tables WHERE name = 'subscription_skip_requests')
-  DROP TABLE dbo.subscription_skip_requests;
+CREATE INDEX idx_subscription_orders_subscription ON dbo.subscription_orders(subscription_id);
+CREATE INDEX idx_subscription_orders_charge_date ON dbo.subscription_orders(charge_date);
+CREATE INDEX idx_subscription_orders_payment_status ON dbo.subscription_orders(payment_status);
 
+-- 5. Subscription Skip Requests
 CREATE TABLE dbo.subscription_skip_requests (
     skip_request_id CHAR(36) PRIMARY KEY,
     subscription_id CHAR(36) NOT NULL,
@@ -104,15 +114,13 @@ CREATE TABLE dbo.subscription_skip_requests (
     reason NVARCHAR(500),
     created_date DATETIME2 DEFAULT GETUTCDATE(),
     requested_by CHAR(36),
-    FOREIGN KEY (subscription_id) REFERENCES dbo.subscriptions(subscription_id),
-    INDEX idx_subscription (subscription_id),
-    INDEX idx_skip_date (skip_billing_date)
+    FOREIGN KEY (subscription_id) REFERENCES dbo.subscriptions(subscription_id)
 );
 
--- 6. Subscription Changes (audit trail)
-IF EXISTS (SELECT 1 FROM sys.tables WHERE name = 'subscription_changes')
-  DROP TABLE dbo.subscription_changes;
+CREATE INDEX idx_subscription_skip_requests_subscription ON dbo.subscription_skip_requests(subscription_id);
+CREATE INDEX idx_subscription_skip_requests_skip_billing_date ON dbo.subscription_skip_requests(skip_billing_date);
 
+-- 6. Subscription Changes (audit trail)
 CREATE TABLE dbo.subscription_changes (
     change_id CHAR(36) PRIMARY KEY,
     subscription_id CHAR(36) NOT NULL,
@@ -123,16 +131,14 @@ CREATE TABLE dbo.subscription_changes (
     reason NVARCHAR(500),
     created_date DATETIME2 DEFAULT GETUTCDATE(),
     created_by CHAR(36),
-    FOREIGN KEY (subscription_id) REFERENCES dbo.subscriptions(subscription_id),
-    INDEX idx_subscription (subscription_id),
-    INDEX idx_change_type (change_type),
-    INDEX idx_created_date (created_date)
+    FOREIGN KEY (subscription_id) REFERENCES dbo.subscriptions(subscription_id)
 );
 
--- 7. Payment Methods (Stripe integration)
-IF EXISTS (SELECT 1 FROM sys.tables WHERE name = 'payment_methods')
-  DROP TABLE dbo.payment_methods;
+CREATE INDEX idx_subscription_changes_subscription ON dbo.subscription_changes(subscription_id);
+CREATE INDEX idx_subscription_changes_change_type ON dbo.subscription_changes(change_type);
+CREATE INDEX idx_subscription_changes_created_date ON dbo.subscription_changes(created_date);
 
+-- 7. Payment Methods (Stripe integration)
 CREATE TABLE dbo.payment_methods (
     payment_method_id CHAR(36) PRIMARY KEY,
     user_id CHAR(36) NOT NULL,
@@ -143,10 +149,11 @@ CREATE TABLE dbo.payment_methods (
     card_last4 VARCHAR(4),
     is_default BIT DEFAULT 0,
     created_date DATETIME2 DEFAULT GETUTCDATE(),
-    updated_date DATETIME2 DEFAULT GETUTCDATE(),
-    INDEX idx_user (user_id),
-    INDEX idx_stripe_customer (stripe_customer_id)
+    updated_date DATETIME2 DEFAULT GETUTCDATE()
 );
+
+CREATE INDEX idx_payment_methods_user ON dbo.payment_methods(user_id);
+CREATE INDEX idx_payment_methods_stripe_customer ON dbo.payment_methods(stripe_customer_id);
 
 -- Update subscription_orders to add payment-related columns
 IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('dbo.subscription_orders') AND name = 'stripe_payment_intent')
@@ -154,11 +161,18 @@ BEGIN
     ALTER TABLE dbo.subscription_orders ADD stripe_payment_intent NVARCHAR(100);
     ALTER TABLE dbo.subscription_orders ADD stripe_refund_id NVARCHAR(100);
     ALTER TABLE dbo.subscription_orders ADD refund_reason NVARCHAR(500);
-    ALTER TABLE dbo.subscription_orders ADD INDEX idx_stripe_payment_intent (stripe_payment_intent);
 END;
 
--- Sample subscription plans
-SET IDENTITY_INSERT dbo.subscription_plans OFF;
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'idx_subscription_orders_stripe_payment_intent'
+      AND object_id = OBJECT_ID('dbo.subscription_orders')
+)
+BEGIN
+    CREATE INDEX idx_subscription_orders_stripe_payment_intent
+        ON dbo.subscription_orders(stripe_payment_intent);
+END;
 
 INSERT INTO dbo.subscription_plans (
   plan_id, plan_name, description, price, billing_cycle, frequency, max_skip_per_year, status

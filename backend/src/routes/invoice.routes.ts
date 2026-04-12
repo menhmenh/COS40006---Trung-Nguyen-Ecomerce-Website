@@ -1,21 +1,12 @@
-/**
- * Invoice Routes
- * Phase 3: Invoice API Endpoints
- */
-
 import express, { Router, Request, Response } from 'express';
 import { invoiceService } from '../services/invoice.service';
+import { authenticate } from '../middleware/auth.middleware';
 
 const router: Router = express.Router();
 
-/**
- * Get invoices for current user
- * GET /api/invoices
- * Query params: limit (default: 50)
- */
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = req.body.user_id || req.headers['x-user-id'] as string;
+    const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ error: 'User ID required' });
     }
@@ -34,11 +25,7 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-/**
- * Get invoice by ID
- * GET /api/invoices/:invoiceId
- */
-router.get('/:invoiceId', async (req: Request, res: Response) => {
+router.get('/:invoiceId', authenticate, async (req: Request, res: Response) => {
   try {
     const { invoiceId } = req.params;
     const invoice = await invoiceService.getInvoiceById(invoiceId);
@@ -47,7 +34,10 @@ router.get('/:invoiceId', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Invoice not found' });
     }
 
-    // Mark as viewed
+    if (invoice.user_id !== req.user?.id) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
     await invoiceService.updateInvoiceStatus(invoiceId, 'VIEWED');
 
     return res.status(200).json({
@@ -60,21 +50,17 @@ router.get('/:invoiceId', async (req: Request, res: Response) => {
   }
 });
 
-/**
- * Get invoices by subscription
- * GET /api/subscriptions/:subscriptionId/invoices
- */
-router.get('/subscription/:subscriptionId', async (req: Request, res: Response) => {
+router.get('/subscription/:subscriptionId', authenticate, async (req: Request, res: Response) => {
   try {
     const { subscriptionId } = req.params;
     const limit = parseInt(req.query.limit as string) || 12;
-
     const invoices = await invoiceService.getInvoicesBySubscription(subscriptionId, limit);
+    const filtered = invoices.filter((invoice) => invoice.user_id === req.user?.id);
 
     return res.status(200).json({
       success: true,
-      data: invoices,
-      count: invoices.length,
+      data: filtered,
+      count: filtered.length,
     });
   } catch (error) {
     console.error('Error fetching subscription invoices:', error);
@@ -82,13 +68,9 @@ router.get('/subscription/:subscriptionId', async (req: Request, res: Response) 
   }
 });
 
-/**
- * Get invoice summary for dashboard
- * GET /api/invoices/summary/dashboard
- */
-router.get('/summary/dashboard', async (req: Request, res: Response) => {
+router.get('/summary/dashboard', authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = req.body.user_id || req.headers['x-user-id'] as string;
+    const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ error: 'User ID required' });
     }
@@ -105,11 +87,7 @@ router.get('/summary/dashboard', async (req: Request, res: Response) => {
   }
 });
 
-/**
- * Admin: Get overdue invoices
- * GET /api/admin/invoices/overdue
- */
-router.get('/admin/overdue', async (req: Request, res: Response) => {
+router.get('/admin/overdue', authenticate, async (req: Request, res: Response) => {
   try {
     const daysOverdue = parseInt(req.query.daysOverdue as string) || 30;
     const overdueInvoices = await invoiceService.getOverdueInvoices(daysOverdue);
