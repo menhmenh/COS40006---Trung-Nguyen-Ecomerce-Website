@@ -4,8 +4,8 @@ import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Alowishus Delicious Coffee',
-  description: 'A drink from the "My Alowishus" bottled brews range OR grab one of our delicious coffee\'s.',
+  title: 'Trung Nguyen Coffee',
+  description: 'A drink from Trung Nguyen bottled brews range OR grab one of our delicious coffee\'s.',
   generator: 'v0.app',
   icons: {
     icon: [

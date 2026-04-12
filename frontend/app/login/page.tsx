@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { Checkbox } from '@/components/ui/checkbox'
+import Header from '@/components/header'
 
 export default function AuthPage() {
   const router = useRouter()
@@ -85,12 +86,28 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white py-16 px-4 font-sans">
-      <div className="container mx-auto max-w-6xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24 relative">
-          <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-[1px] bg-gray-200 -translate-x-1/2"></div>
+    <div className="min-h-screen bg-stone-50 font-sans">
+      <Header />
 
-          <div className="space-y-6">
+      <section className="border-b border-stone-200 bg-[radial-gradient(circle_at_top,_rgba(120,53,15,0.08),_transparent_55%),linear-gradient(180deg,#fff_0%,#f8f5f1_100%)]">
+        <div className="container mx-auto px-4 py-10 md:py-14">
+          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-stone-500">
+            Account Access
+          </p>
+          <h1 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 md:text-4xl">
+            Sign in or create your Trung Nguyen account
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-stone-600 md:text-base">
+            Manage subscriptions, payment methods, invoices, and your monthly coffee box in one place.
+          </p>
+        </div>
+      </section>
+
+      <div className="container mx-auto max-w-6xl px-4 py-12 md:py-16">
+        <div className="grid grid-cols-1 gap-12 md:relative md:grid-cols-2 md:gap-24">
+          <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-stone-200"></div>
+
+          <div className="space-y-6 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm md:p-8">
             <h2 className="text-2xl font-bold uppercase tracking-wide text-black">
               Login
             </h2>
@@ -155,7 +172,7 @@ export default function AuthPage() {
             </form>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-6 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm md:p-8">
             <h2 className="text-2xl font-bold uppercase tracking-wide text-black">
               Register
             </h2>
