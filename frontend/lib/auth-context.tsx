@@ -28,6 +28,7 @@ interface AuthContextType {
   token: string | null
   login: (email: string, password: string) => Promise<AuthResult>
   register: (email: string, password: string, name: string) => Promise<AuthResult>
+  updateUser: (updates: Partial<User>) => void
   logout: () => void
   isLoading: boolean
 }
@@ -131,6 +132,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const updateUser = (updates: Partial<User>) => {
+    setUser((currentUser) => {
+      if (!currentUser) {
+        return currentUser
+      }
+
+      const nextUser = withUserRole({
+        ...currentUser,
+        ...updates,
+      })
+
+      if (token) {
+        persistSession({
+          token,
+          user: nextUser,
+        })
+      }
+
+      return nextUser
+    })
+  }
+
   const logout = () => {
     setUser(null)
     setToken(null)
@@ -139,7 +162,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, register, updateUser, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   )

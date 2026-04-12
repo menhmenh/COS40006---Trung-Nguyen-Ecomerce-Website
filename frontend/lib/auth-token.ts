@@ -6,6 +6,8 @@ type TokenUser = {
   name: string
   username?: string
   role?: 'admin' | 'user'
+  points?: number
+  tier?: string
 }
 
 export function signAuthToken(user: TokenUser) {

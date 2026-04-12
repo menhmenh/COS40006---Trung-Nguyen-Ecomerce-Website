@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 
 import { getPool, sql } from '@/lib/db'
 import { signAuthToken } from '@/lib/auth-token'
+import { getTierFromPoints } from '@/lib/loyalty'
 
 export const runtime = 'nodejs'
 
@@ -39,6 +40,8 @@ export async function POST(request: Request) {
     const [firstName, ...rest] = String(name).trim().split(' ')
     const lastName = rest.join(' ')
     const passwordHash = await bcrypt.hash(password, 10)
+    const initialPoints = 0
+    const initialTier = getTierFromPoints(initialPoints)
 
     const result = await pool
       .request()
@@ -47,12 +50,14 @@ export async function POST(request: Request) {
       .input('first_name', sql.VarChar(100), firstName || null)
       .input('last_name', sql.VarChar(100), lastName || null)
       .input('password_hash', sql.VarChar(255), passwordHash)
+      .input('loyalty_points', sql.Int, initialPoints)
+      .input('loyalty_tier', sql.VarChar(20), initialTier)
       .query(`
         INSERT INTO users (
           user_id, username, email, first_name, last_name,
-          status, created_at, last_login, password_hash
+          status, created_at, last_login, password_hash, loyalty_points, loyalty_tier
         )
-        OUTPUT INSERTED.user_id, INSERTED.username, INSERTED.email, INSERTED.first_name, INSERTED.last_name
+        OUTPUT INSERTED.user_id, INSERTED.username, INSERTED.email, INSERTED.first_name, INSERTED.last_name, INSERTED.loyalty_points, INSERTED.loyalty_tier
         VALUES (
           CONVERT(CHAR(36), NEWID()),
           @username,
@@ -62,7 +67,9 @@ export async function POST(request: Request) {
           'Active',
           GETDATE(),
           NULL,
-          @password_hash
+          @password_hash,
+          @loyalty_points,
+          @loyalty_tier
         )
       `)
 
@@ -77,6 +84,8 @@ export async function POST(request: Request) {
         .trim(),
       username: createdUser.username,
       role: 'user' as const,
+      points: Number(createdUser.loyalty_points || 0),
+      tier: createdUser.loyalty_tier || initialTier,
     }
 
     return NextResponse.json(

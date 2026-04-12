@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { User, Award } from "lucide-react"
+import { getNextTierTarget, LOYALTY_GOLD_THRESHOLD, LOYALTY_PLATINUM_THRESHOLD } from "@/lib/loyalty"
 
 export default function ProfileTab({ user }: any) {
   // Hàm chọn màu sắc huy hiệu tùy theo hạng
@@ -16,6 +17,7 @@ export default function ProfileTab({ user }: any) {
 
   const currentTier = user.tier || 'Silver'
   const currentPoints = user.points || 0
+  const nextTier = getNextTierTarget(currentPoints)
 
   // Logic kiểm tra tài khoản Admin
   const isAdmin = user?.role === 'admin' || user?.email === 'admin.demo@trungnguyen.com'
@@ -68,6 +70,21 @@ export default function ProfileTab({ user }: any) {
             <div className="flex justify-between border-b pb-2">
               <span className="text-muted-foreground">Reward Points</span>
               <span className="font-medium">{currentPoints.toLocaleString()}</span>
+            </div>
+
+            <div className="rounded-xl border border-dashed border-border bg-background/60 px-4 py-3 text-sm text-muted-foreground">
+              <p>Silver: 0-{LOYALTY_GOLD_THRESHOLD - 1} points</p>
+              <p>Gold: {LOYALTY_GOLD_THRESHOLD}-{LOYALTY_PLATINUM_THRESHOLD - 1} points</p>
+              <p>Platinum: {LOYALTY_PLATINUM_THRESHOLD}+ points</p>
+              {nextTier ? (
+                <p className="mt-2 font-medium text-foreground">
+                  Need {nextTier.pointsNeeded.toLocaleString()} more points to reach {nextTier.nextTier}.
+                </p>
+              ) : (
+                <p className="mt-2 font-medium text-foreground">
+                  You are already at the highest tier.
+                </p>
+              )}
             </div>
           </>
         )}

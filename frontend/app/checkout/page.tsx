@@ -1,28 +1,35 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Header } from '@/components/header'
-import { Footer } from '@/components/footer'
+
 import { AddressModal } from '@/components/address-modal'
-import { useCart } from '@/lib/cart-context'
-import { useAuth } from '@/lib/auth-context'
-import { products } from '@/lib/store'
+import { Footer } from '@/components/footer'
+import { Header } from '@/components/header'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
-import Link from 'next/link'
+import { useAuth } from '@/lib/auth-context'
+import { useCart } from '@/lib/cart-context'
 import { trackMultiplePurchases } from '@/lib/recommendations'
+import { products } from '@/lib/store'
+
+type OrderResponse = {
+  loyalty?: {
+    earnedPoints: number
+    totalPoints: number
+    tier: string
+  }
+}
 
 export default function CheckoutPage() {
   const router = useRouter()
   const { items, total, clearCart } = useCart()
-  const { user } = useAuth()
+  const { user, updateUser } = useAuth()
   const { toast } = useToast()
   const [isProcessing, setIsProcessing] = useState(false)
-
-  // STATE ĐỂ BẬT/TẮT MODAL (Từ nhánh HEAD)
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
 
   const [formData, setFormData] = useState({
@@ -38,13 +45,13 @@ export default function CheckoutPage() {
   const [addresses, setAddresses] = useState([
     {
       id: 1,
-      name: 'Nhà riêng',
+      name: 'Nha rieng',
       fullName: user?.name || '',
       phone: '',
       address: '',
       ward: '',
       district: '',
-      city: 'TP. Hồ Chí Minh',
+      city: 'TP. Ho Chi Minh',
       isDefault: true,
     },
   ])
@@ -63,9 +70,9 @@ export default function CheckoutPage() {
       <div className="min-h-screen flex flex-col">
         <Header />
         <div className="container flex-1 mx-auto px-4 py-16 text-center">
-          <h1 className="text-3xl font-bold mb-4">Giỏ hàng của bạn trống</h1>
+          <h1 className="mb-4 text-3xl font-bold">Gio hang cua ban trong</h1>
           <Link href="/products">
-            <Button className="rounded-full px-8">MUA CÀ PHÊ</Button>
+            <Button className="rounded-full px-8">MUA CA PHE</Button>
           </Link>
         </div>
         <Footer />
@@ -78,21 +85,20 @@ export default function CheckoutPage() {
 
     if (!user) {
       toast({
-        title: 'Vui lòng đăng nhập',
-        description: 'Bạn cần có tài khoản trước khi đặt hàng.',
+        title: 'Vui long dang nhap',
+        description: 'Ban can co tai khoan truoc khi dat hang.',
         variant: 'destructive',
       })
       router.push('/login')
       return
     }
 
-    // TÌM LẤY ĐỊA CHỈ ĐANG ĐƯỢC CHỌN (TICK RADIO)
     const activeAddress = addresses.find((addr) => addr.id === selectedAddress)
-    
+
     if (!activeAddress || !activeAddress.address || !activeAddress.city) {
       toast({
-        title: 'Thiếu địa chỉ',
-        description: 'Vui lòng bấm + Thêm địa chỉ và điền đầy đủ thông tin giao hàng.',
+        title: 'Thieu dia chi',
+        description: 'Vui long them dia chi giao hang day du truoc khi dat hang.',
         variant: 'destructive',
       })
       return
@@ -124,7 +130,15 @@ export default function CheckoutPage() {
         throw new Error('Failed to create order')
       }
 
-      // --- LOGIC CỦA CHANH: Lưu lịch sử mua hàng để gợi ý sản phẩm ---
+      const orderResult = (await response.json()) as OrderResponse
+
+      if (orderResult.loyalty) {
+        updateUser({
+          points: orderResult.loyalty.totalPoints,
+          tier: orderResult.loyalty.tier,
+        })
+      }
+
       await trackMultiplePurchases(
         user.id,
         items.map((item) => {
@@ -133,23 +147,24 @@ export default function CheckoutPage() {
             productId: item.productId,
             categoryId: product?.category || '',
           }
-        })
+        }),
       )
-      // -------------------------------------------------------------
 
       clearCart()
 
       toast({
-        title: 'Đặt hàng thành công!',
-        description: 'Cảm ơn bạn đã mua hàng. Đơn hàng của bạn đang được xử lý.',
+        title: 'Dat hang thanh cong',
+        description: orderResult.loyalty
+          ? `Ban nhan ${orderResult.loyalty.earnedPoints} diem. Hang hien tai: ${orderResult.loyalty.tier}.`
+          : 'Cam on ban da mua hang. Don hang cua ban dang duoc xu ly.',
       })
 
       router.push('/account')
     } catch (error) {
       console.error('Checkout failed:', error)
       toast({
-        title: 'Lỗi đặt hàng',
-        description: 'Không thể xử lý đơn hàng lúc này. Vui lòng thử lại.',
+        title: 'Loi dat hang',
+        description: 'Khong the xu ly don hang luc nay. Vui long thu lai.',
         variant: 'destructive',
       })
     } finally {
@@ -162,19 +177,18 @@ export default function CheckoutPage() {
       <Header />
 
       <div className="container mx-auto px-4 py-12">
-        <h1 className="text-4xl font-bold mb-8">Thanh Toán</h1>
+        <h1 className="mb-8 text-4xl font-bold">Thanh Toan</h1>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          <form onSubmit={handleSubmit} className="lg:col-span-2 space-y-8">
-            
-            <div className="bg-muted rounded-lg p-6 border border-border">
-              <h2 className="text-2xl font-bold mb-6">Địa chỉ giao hàng</h2>
-              <div className="space-y-3 max-h-64 overflow-y-auto">
+        <div className="grid gap-8 lg:grid-cols-3">
+          <form onSubmit={handleSubmit} className="space-y-8 lg:col-span-2">
+            <div className="rounded-lg border border-border bg-muted p-6">
+              <h2 className="mb-6 text-2xl font-bold">Dia chi giao hang</h2>
+              <div className="max-h-64 space-y-3 overflow-y-auto">
                 {addresses.map((addr) => (
                   <div
                     key={addr.id}
                     onClick={() => setSelectedAddress(addr.id)}
-                    className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                    className={`cursor-pointer rounded-lg border p-4 transition-colors ${
                       selectedAddress === addr.id
                         ? 'border-primary bg-background'
                         : 'border-border hover:border-primary'
@@ -193,11 +207,14 @@ export default function CheckoutPage() {
                         <p className="text-sm text-muted-foreground">{addr.fullName}</p>
                         <p className="text-sm text-muted-foreground">{addr.phone}</p>
                         <p className="text-sm text-muted-foreground">
-                          {addr.address && `${addr.address}, `}{addr.ward && `${addr.ward}, `}{addr.district && `${addr.district}, `}{addr.city}
+                          {addr.address && `${addr.address}, `}
+                          {addr.ward && `${addr.ward}, `}
+                          {addr.district && `${addr.district}, `}
+                          {addr.city}
                         </p>
                         {addr.isDefault && (
-                          <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded mt-2 inline-block">
-                            Địa chỉ mặc định
+                          <span className="mt-2 inline-block rounded bg-primary px-2 py-1 text-xs text-primary-foreground">
+                            Dia chi mac dinh
                           </span>
                         )}
                       </div>
@@ -205,19 +222,19 @@ export default function CheckoutPage() {
                   </div>
                 ))}
               </div>
-              
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="w-full mt-4 rounded-full"
+
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-4 w-full rounded-full"
                 onClick={() => setIsAddressModalOpen(true)}
               >
-                + THÊM ĐỊA CHỈ
+                + THEM DIA CHI
               </Button>
             </div>
 
-            <div className="bg-muted rounded-lg p-6 border border-border">
-              <h2 className="text-2xl font-bold mb-6">Thông tin liên hệ</h2>
+            <div className="rounded-lg border border-border bg-muted p-6">
+              <h2 className="mb-6 text-2xl font-bold">Thong tin lien he</h2>
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="email">Email</Label>
@@ -231,7 +248,7 @@ export default function CheckoutPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="name">Họ và tên</Label>
+                  <Label htmlFor="name">Ho va ten</Label>
                   <Input
                     id="name"
                     type="text"
@@ -242,7 +259,7 @@ export default function CheckoutPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="phone">Số điện thoại (dự phòng)</Label>
+                  <Label htmlFor="phone">So dien thoai</Label>
                   <Input
                     id="phone"
                     type="tel"
@@ -255,12 +272,12 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            <div className="bg-muted rounded-lg p-6 border border-border">
-              <h2 className="text-2xl font-bold mb-6">Phương thức thanh toán</h2>
+            <div className="rounded-lg border border-border bg-muted p-6">
+              <h2 className="mb-6 text-2xl font-bold">Phuong thuc thanh toan</h2>
               <div className="space-y-3">
                 <div
                   onClick={() => setSelectedPayment('cod')}
-                  className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                  className={`cursor-pointer rounded-lg border p-4 transition-colors ${
                     selectedPayment === 'cod'
                       ? 'border-primary bg-background'
                       : 'border-border hover:border-primary'
@@ -274,15 +291,15 @@ export default function CheckoutPage() {
                       onChange={() => setSelectedPayment('cod')}
                     />
                     <div>
-                      <p className="font-medium">Thanh toán khi nhận hàng (COD)</p>
-                      <p className="text-sm text-muted-foreground">Thanh toán tiền khi nhận sản phẩm</p>
+                      <p className="font-medium">Thanh toan khi nhan hang</p>
+                      <p className="text-sm text-muted-foreground">Thanh toan tien khi nhan san pham</p>
                     </div>
                   </div>
                 </div>
 
                 <div
                   onClick={() => setSelectedPayment('card')}
-                  className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                  className={`cursor-pointer rounded-lg border p-4 transition-colors ${
                     selectedPayment === 'card'
                       ? 'border-primary bg-background'
                       : 'border-border hover:border-primary'
@@ -296,16 +313,15 @@ export default function CheckoutPage() {
                       onChange={() => setSelectedPayment('card')}
                     />
                     <div>
-                      <p className="font-medium">Thẻ tín dụng / Thẻ ghi nợ</p>
+                      <p className="font-medium">The tin dung / ghi no</p>
                       <p className="text-sm text-muted-foreground">Visa, Mastercard, JCB</p>
                     </div>
                   </div>
                 </div>
 
-                {/* Giữ lại option Chuyển khoản của Chanh */}
                 <div
                   onClick={() => setSelectedPayment('bank')}
-                  className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                  className={`cursor-pointer rounded-lg border p-4 transition-colors ${
                     selectedPayment === 'bank'
                       ? 'border-primary bg-background'
                       : 'border-border hover:border-primary'
@@ -319,8 +335,8 @@ export default function CheckoutPage() {
                       onChange={() => setSelectedPayment('bank')}
                     />
                     <div>
-                      <p className="font-medium">Chuyển khoản ngân hàng</p>
-                      <p className="text-sm text-muted-foreground">Chuyển tiền trước khi giao hàng</p>
+                      <p className="font-medium">Chuyen khoan ngan hang</p>
+                      <p className="text-sm text-muted-foreground">Chuyen tien truoc khi giao hang</p>
                     </div>
                   </div>
                 </div>
@@ -328,11 +344,11 @@ export default function CheckoutPage() {
             </div>
 
             {selectedPayment === 'card' && (
-              <div className="bg-muted rounded-lg p-6 border border-border">
-                <h2 className="text-xl font-bold mb-6">Thông tin thẻ</h2>
+              <div className="rounded-lg border border-border bg-muted p-6">
+                <h2 className="mb-6 text-xl font-bold">Thong tin the</h2>
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="cardNumber">Số thẻ</Label>
+                    <Label htmlFor="cardNumber">So the</Label>
                     <Input
                       id="cardNumber"
                       type="text"
@@ -345,7 +361,7 @@ export default function CheckoutPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="expiryDate">Hạn sử dụng</Label>
+                      <Label htmlFor="expiryDate">Han su dung</Label>
                       <Input
                         id="expiryDate"
                         type="text"
@@ -378,18 +394,19 @@ export default function CheckoutPage() {
               disabled={isProcessing}
               className="w-full rounded-full py-6 text-lg font-medium"
             >
-              {isProcessing ? 'Đang xử lý...' : 'XÁC NHẬN ĐẶT HÀNG'}
+              {isProcessing ? 'Dang xu ly...' : 'XAC NHAN DAT HANG'}
             </Button>
           </form>
 
           <div>
-            <div className="bg-muted rounded-lg p-6 border border-border sticky top-24">
-              <h2 className="text-2xl font-bold mb-6">Chi tiết giỏ hàng</h2>
+            <div className="sticky top-24 rounded-lg border border-border bg-muted p-6">
+              <h2 className="mb-6 text-2xl font-bold">Chi tiet gio hang</h2>
 
-              <div className="space-y-4 mb-6 max-h-96 overflow-y-auto">
+              <div className="mb-6 max-h-96 space-y-4 overflow-y-auto">
                 {items.map((item) => {
                   const product = products.find((p) => p.id === item.productId)
                   if (!product) return null
+
                   return (
                     <div key={item.productId} className="flex items-start justify-between text-sm">
                       <div>
@@ -397,34 +414,33 @@ export default function CheckoutPage() {
                         <p className="text-muted-foreground">x{item.quantity}</p>
                       </div>
                       <span className="font-medium">
-                        {(product.price * item.quantity).toLocaleString('vi-VN')}đ
+                        {(product.price * item.quantity).toLocaleString('vi-VN')}d
                       </span>
                     </div>
                   )
                 })}
               </div>
 
-              <div className="border-t border-border pt-4 space-y-3">
+              <div className="space-y-3 border-t border-border pt-4">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Tổng tiền hàng</span>
-                  <span className="font-medium">{total.toLocaleString('vi-VN')}đ</span>
+                  <span className="text-muted-foreground">Tong tien hang</span>
+                  <span className="font-medium">{total.toLocaleString('vi-VN')}d</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Phí vận chuyển</span>
-                  <span className="font-medium">Miễn phí</span>
+                  <span className="text-muted-foreground">Phi van chuyen</span>
+                  <span className="font-medium">Mien phi</span>
                 </div>
-                {/* Giữ lại VAT của Chanh */}
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Thuế VAT (10%)</span>
-                  <span className="font-medium">{(total * 0.1).toLocaleString('vi-VN')}đ</span>
+                  <span className="text-muted-foreground">Thue VAT (10%)</span>
+                  <span className="font-medium">{(total * 0.1).toLocaleString('vi-VN')}d</span>
                 </div>
               </div>
 
-              <div className="border-t border-border mt-4 pt-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-lg font-bold">Tổng cộng</span>
+              <div className="mt-4 border-t border-border pt-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-lg font-bold">Tong cong</span>
                   <span className="text-3xl font-bold text-primary">
-                    {(total * 1.1).toLocaleString('vi-VN')}đ
+                    {(total * 1.1).toLocaleString('vi-VN')}d
                   </span>
                 </div>
               </div>
@@ -432,7 +448,7 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
-      
+
       <AddressModal
         open={isAddressModalOpen}
         onOpenChange={setIsAddressModalOpen}

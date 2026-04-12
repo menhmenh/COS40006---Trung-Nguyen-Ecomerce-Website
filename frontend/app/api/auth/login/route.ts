@@ -48,7 +48,7 @@ export async function POST(request: Request) {
         WHERE user_id = @userId
       `)
       
-    const role = adminCheck.recordset.length > 0 ? 'admin' : 'user'
+    const role: 'admin' | 'user' = adminCheck.recordset.length > 0 ? 'admin' : 'user'
 
     await pool
       .request()
