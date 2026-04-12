@@ -6,7 +6,6 @@ export const runtime = 'nodejs'
 export async function GET() {
   try {
     const products = await listProducts()
-
     return NextResponse.json(products)
   } catch (error) {
     console.error('Get products API error:', error)

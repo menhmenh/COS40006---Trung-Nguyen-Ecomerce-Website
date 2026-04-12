@@ -67,21 +67,45 @@ type ProductInput = {
   image?: string
 }
 
-const STORAGE_ENDPOINT = (process.env.NEXT_PUBLIC_STORAGE_ENDPOINT || '').trim().replace(/\/$/, '')
-const STORAGE_BUCKET = (process.env.NEXT_PUBLIC_STORAGE || 'product').trim()
+const PLACEHOLDER_IMAGE = '/placeholder.svg'
 
-function getStoragePublicBase(endpoint: string) {
-  if (!endpoint) return ''
-  if (endpoint.endsWith('/storage/v1/s3')) {
-    return endpoint.replace(/\/storage\/v1\/s3$/, '/storage/v1/object/public')
+function getSupabasePublicBaseUrl(): string | null {
+  const endpoint = process.env.NEXT_PUBLIC_STORAGE_ENDPOINT?.trim()
+  const bucket = process.env.NEXT_PUBLIC_STORAGE?.trim()
+
+  if (!endpoint || !bucket) return null
+
+  const normalizedEndpoint = endpoint.replace(/\/+$/, '')
+  if (normalizedEndpoint.includes('/storage/v1/object/public')) {
+    return `${normalizedEndpoint}/${bucket}`
   }
-  if (endpoint.endsWith('/storage/v1/object/public')) {
-    return endpoint
-  }
-  return `${endpoint}/storage/v1/object/public`
+
+  const projectBase = normalizedEndpoint.replace(/\/storage\/v1\/s3$/i, '')
+  return `${projectBase}/storage/v1/object/public/${bucket}`
 }
 
-const STORAGE_PUBLIC_BASE = getStoragePublicBase(STORAGE_ENDPOINT)
+const supabasePublicBaseUrl = getSupabasePublicBaseUrl()
+
+function resolveProductImageUrl(rawImage?: string | null): string {
+  const image = rawImage?.trim()
+  if (!image) return PLACEHOLDER_IMAGE
+  if (image === PLACEHOLDER_IMAGE) return PLACEHOLDER_IMAGE
+  if (/^https?:\/\//i.test(image)) return image
+
+  const normalizedPath = image.replace(/^\/+/, '')
+  const hasFileName = /\.[a-z0-9]+$/i.test(normalizedPath)
+  const resolvedPath = hasFileName ? normalizedPath : normalizedPath.replace(/\/+$/, '')
+
+  if (supabasePublicBaseUrl) {
+    if (!hasFileName) {
+      return `/api/product-image?path=${encodeURIComponent(resolvedPath)}`
+    }
+    return `${supabasePublicBaseUrl}/${resolvedPath}`
+  }
+
+  // Fallback for local static assets when Supabase env vars are not configured in frontend.
+  return hasFileName ? `/${resolvedPath}` : `/${resolvedPath}/image.jpg`
+}
 
 // --- HELPERS ---
 
@@ -98,32 +122,6 @@ function normalizeOrderStatus(status?: string | null): OrderStatus {
   const normalized = String(status || 'pending').toLowerCase()
   const validStatuses: OrderStatus[] = ['paid', 'packed', 'shipped', 'delivered', 'completed', 'cancelled', 'refunded']
   return validStatuses.includes(normalized as OrderStatus) ? (normalized as OrderStatus) : 'pending'
-}
-
-function mapImageUrl(image?: string | null) {
-  const value = image?.trim()
-  if (!value) return '/placeholder.svg'
-  if (value === '/placeholder.svg') {
-    return value
-  }
-
-  if (value.startsWith('http://') || value.startsWith('https://')) {
-    return value
-  }
-
-  const normalizedPath = value.replace(/^\/+/, '')
-
-  if (!STORAGE_PUBLIC_BASE || !STORAGE_BUCKET) {
-    return `/${normalizedPath}`
-  }
-
-  const safePath = normalizedPath
-    .split('/')
-    .filter(Boolean)
-    .map((segment) => encodeURIComponent(segment))
-    .join('/')
-
-  return `${STORAGE_PUBLIC_BASE}/${encodeURIComponent(STORAGE_BUCKET)}/${safePath}`
 }
 
 // --- MAPPING LOGIC ---
@@ -149,7 +147,7 @@ function mapProduct(row: ProductRow): Product {
     price: Number(row.price || 0),
     stock,
     description: row.description || '',
-    image: mapImageUrl(row.image),
+    image: resolveProductImageUrl(row.image),
     badge: stock > 0 ? undefined : 'Sold Out',
     rating: Number(row.rating || 0),
     reviews: Number(row.reviews || 0),
@@ -208,7 +206,7 @@ async function getOrderItems(orderId: string): Promise<OrderItem[]> {
     productName: row.productName || 'Unknown Product',
     price: Number(row.price || 0),
     quantity: Number(row.quantity || 0),
-    image: mapImageUrl(row.image),
+    image: resolveProductImageUrl(row.image),
   }))
 }
 
