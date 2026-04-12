@@ -1,0 +1,29 @@
+name: Backend Integration
+
+on:
+  workflow_dispatch:
+
+jobs:
+  subscription-flow:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./backend
+
+    env:
+      BACKEND_BASE_URL: ${{ secrets.BACKEND_BASE_URL }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      INTEGRATION_PLAN_ID: ${{ secrets.INTEGRATION_PLAN_ID }}
+      INTEGRATION_USER_ID: ${{ secrets.INTEGRATION_USER_ID }}
+      INTEGRATION_USER_EMAIL: ${{ secrets.INTEGRATION_USER_EMAIL }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm install
+      - run: npm run test:integration

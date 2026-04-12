@@ -1,71 +1,11 @@
 'use client';
 
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 import { SubscriptionPlansGrid } from '@/components/subscriptions/subscription-plans-grid';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Coffee, Zap, Heart } from 'lucide-react';
-import Link from 'next/link';
-
-// Sample subscription plans data
-const SUBSCRIPTION_PLANS = [
-  {
-    id: 'basic-monthly',
-    name: 'Basic Monthly',
-    price: 29.99,
-    billingCycle: 'monthly' as const,
-    description: 'Perfect for coffee lovers',
-    coffeeQuantity: 2,
-    roastTypes: ['Medium Roast'],
-    features: [
-      { text: '2 bags of premium coffee per month', included: true },
-      { text: 'Access to exclusive blends', included: true },
-      { text: 'Free shipping', included: true },
-      { text: 'Customer support', included: true },
-      { text: 'Skip months anytime', included: false },
-      { text: 'Priority shipping', included: false },
-    ],
-  },
-  {
-    id: 'premium-monthly',
-    name: 'Premium Monthly',
-    price: 49.99,
-    billingCycle: 'monthly' as const,
-    description: 'For the true enthusiast',
-    coffeeQuantity: 4,
-    roastTypes: ['Light Roast', 'Medium Roast', 'Dark Roast'],
-    isPopular: true,
-    features: [
-      { text: '4 bags of premium coffee per month', included: true },
-      { text: 'Access to exclusive blends', included: true },
-      { text: 'Free priority shipping', included: true },
-      { text: '24/7 customer support', included: true },
-      { text: 'Skip up to 3 months per year', included: true },
-      { text: 'Quarterly surprise gift', included: true },
-    ],
-  },
-  {
-    id: 'deluxe-monthly',
-    name: 'Deluxe Monthly',
-    price: 79.99,
-    billingCycle: 'monthly' as const,
-    description: 'The ultimate coffee experience',
-    coffeeQuantity: 6,
-    roastTypes: ['Light', 'Medium', 'Dark', 'Single Origin'],
-    savings: 15,
-    features: [
-      { text: '6 bags of premium coffee per month', included: true },
-      { text: 'Access to exclusive & rare blends', included: true },
-      { text: 'Free express shipping', included: true },
-      { text: 'Premium customer support', included: true },
-      { text: 'Skip up to 6 months per year', included: true },
-      { text: 'Monthly exclusive gift items', included: true },
-    ],
-  },
-];
+import { SUBSCRIPTION_PLANS } from '@/lib/subscription-plans';
 
 // Animation variants - moved outside component to prevent hydration mismatch
 const containerVariants = {
@@ -114,8 +54,6 @@ const descriptionVariants = {
 };
 
 export default function SubscriptionPlansPage() {
-  const [selectedBillingCycle] = useState('monthly');
-
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -257,5 +195,5 @@ export default function SubscriptionPlansPage() {
       </motion.div>
       <Footer />
     </div>
-  )
+  );
 }

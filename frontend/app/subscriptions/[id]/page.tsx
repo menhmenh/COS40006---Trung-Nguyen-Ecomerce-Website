@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import InvoiceHistory from '@/components/account/invoice-history';
-import { LOCAL_SUBSCRIPTIONS } from '@/hooks/use-subscriptions';
+import { fetchBackend, parseBackendResponse } from '@/lib/backend-api';
 import { ArrowLeft, Calendar, DollarSign, Coffee } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -51,34 +51,11 @@ export default function SubscriptionDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const normalize = (value: string) =>
-      value.toLowerCase().trim().replace(/\s+/g, '-');
-
     const fetchSubscription = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/subscriptions/${subscriptionId}`);
-
-        if (!response.ok) {
-          const fallback = LOCAL_SUBSCRIPTIONS.find(
-            (item) =>
-              item.subscription_id === subscriptionId ||
-              item.plan_id === subscriptionId ||
-              normalize(item.plan?.plan_name || '') === normalize(subscriptionId)
-          );
-
-          if (fallback) {
-            setSubscription(fallback as Subscription);
-            setError(null);
-            return;
-          }
-
-          setSubscription(null);
-          setError('Subscription not found');
-          return;
-        }
-
-        const data = await response.json();
+        const response = await fetchBackend(`/api/subscriptions/${subscriptionId}`);
+        const data = await parseBackendResponse<{ data: Subscription }>(response);
         const apiSubscription = data?.data as Subscription | undefined;
 
         if (!apiSubscription) {

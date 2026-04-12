@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { getPool } from '@/lib/db'
+import { signAuthToken } from '@/lib/auth-token'
 
 export const runtime = 'nodejs'
 
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
       `)
 
     // Trả thêm điểm và hạng về cho Frontend (nếu NULL thì mặc định là 0 và Silver)
-    return NextResponse.json({
+    const authUser = {
       id: user.user_id,
       email: user.email,
       name:
@@ -69,6 +70,11 @@ export async function POST(request: Request) {
       role: role,
       points: user.loyalty_points || 0,
       tier: user.loyalty_tier || 'Silver'
+    }
+
+    return NextResponse.json({
+      ...authUser,
+      token: signAuthToken(authUser),
     })
   } catch (error) {
     console.error('Login API error:', error)

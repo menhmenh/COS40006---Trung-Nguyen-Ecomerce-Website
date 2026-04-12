@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const DB_HOST = process.env.DB_HOST || 'tncoffee-sql-01.database.windows.net';
-const DB_USER = process.env.DB_USER || 'trungnguyen@tncoffee-sql-01';
-const DB_PASSWORD = process.env.DB_PASSWORD || 'tnswe40006@';
-const DB_NAME = process.env.DB_NAME || 'tncoffee-db';
+import { getPool, sql } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,24 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      const mssql = require('mssql');
-      const pool = new mssql.ConnectionPool({
-        server: DB_HOST,
-        authentication: {
-          type: 'default',
-          options: {
-            userName: DB_USER,
-            password: DB_PASSWORD,
-          },
-        },
-        options: {
-          database: DB_NAME,
-          encrypt: true,
-          trustServerCertificate: false,
-        },
-      });
-
-      await pool.connect();
+      const pool = await getPool();
 
       // Calculate score multiplier based on interaction type
       const scoreMultiplier = {
@@ -61,11 +40,11 @@ export async function POST(request: NextRequest) {
       // Insert or update user preference
       await pool
         .request()
-        .input('user_id', mssql.Char(36), user_id)
-        .input('product_id', mssql.Char(36), product_id)
-        .input('category_id', mssql.Char(36), category_id || null)
-        .input('interaction_type', mssql.VarChar(50), interaction_type)
-        .input('score', mssql.Decimal(5, 2), score)
+        .input('user_id', sql.Char(36), user_id)
+        .input('product_id', sql.Char(36), product_id)
+        .input('category_id', sql.Char(36), category_id || null)
+        .input('interaction_type', sql.VarChar(50), interaction_type)
+        .input('score', sql.Decimal(5, 2), score)
         .query(`
           IF EXISTS (SELECT 1 FROM dbo.user_product_preferences WHERE user_id = @user_id AND product_id = @product_id)
           BEGIN
@@ -85,9 +64,6 @@ export async function POST(request: NextRequest) {
               (@user_id, @product_id, @category_id, @interaction_type, @score)
           END
         `);
-
-      await pool.close();
-
       return NextResponse.json(
         {
           success: true,

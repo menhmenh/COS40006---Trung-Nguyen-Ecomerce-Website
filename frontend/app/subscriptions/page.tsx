@@ -1,315 +1,133 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { SubscriptionDetailsCard } from '@/components/subscriptions/subscription-details-card';
-import { Button } from '@/components/ui/button';
-import { Coffee, Plus, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
+import { useEffect } from 'react';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/lib/auth-context';
+import { useSubscriptions } from '@/hooks/use-subscriptions';
+import { Coffee, Calendar, Plus } from 'lucide-react';
+import { format } from 'date-fns';
+import { useRouter } from 'next/navigation';
 
-const USER_SUBSCRIPTIONS = [
-  {
-    subscription_id: 'sub-001',
-    planName: 'Premium Monthly',
-    price: 49.99,
-    status: 'active' as const,
-    nextBillingDate: 'April 25, 2026',
-    createdDate: 'January 15, 2026',
-    coffeeQuantity: 4,
-    skippedMonths: 1,
-    maxSkipPerYear: 3,
-  },
-  {
-    subscription_id: 'sub-002',
-    planName: 'Deluxe Monthly',
-    price: 79.99,
-    status: 'active' as const,
-    nextBillingDate: 'May 10, 2026',
-    createdDate: 'February 20, 2026',
-    coffeeQuantity: 6,
-    skippedMonths: 0,
-    maxSkipPerYear: 6,
-  },
-];
+const statusColors: Record<string, string> = {
+  ACTIVE: 'bg-green-100 text-green-800',
+  PAUSED: 'bg-yellow-100 text-yellow-800',
+  CANCELLED: 'bg-red-100 text-red-800',
+  EXPIRED: 'bg-gray-100 text-gray-800',
+  PENDING: 'bg-blue-100 text-blue-800',
+};
 
 export default function SubscriptionsPage() {
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        duration: 0.5,
-      },
-    },
-  };
+  const router = useRouter();
+  const { user, isLoading } = useAuth();
+  const { subscriptions, loading, error } = useSubscriptions(user?.id);
 
-  const headerVariants = {
-    hidden: { opacity: 0, y: -30 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.6,
-      },
-    },
-  };
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push('/login');
+    }
+  }, [isLoading, router, user]);
 
-  const noSubscriptionsVariants = {
-    hidden: { opacity: 0, scale: 0.9 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      transition: {
-        duration: 0.5,
-      },
-    },
-  };
+  if (isLoading || !user) {
+    return <div className="py-16 text-center">Loading...</div>;
+  }
 
   return (
     <>
       <Header />
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="min-h-screen bg-linear-to-br from-stone-50 via-amber-50/20 to-stone-100"
-      >
-      {/* Header */}
-      <motion.div
-        variants={headerVariants}
-        initial="hidden"
-        animate="visible"
-        className="relative overflow-hidden bg-linear-to-r from-stone-700 via-amber-800 to-stone-800 text-amber-50"
-      >
-        {/* Animated background */}
-        <motion.div
-          className="absolute inset-0"
-          animate={{
-            backgroundPosition: ['0px 0px', '100px 100px'],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: 'linear',
-          }}
-          style={{
-            backgroundImage:
-              'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 1px, transparent 1px)',
-            backgroundSize: '50px 50px',
-          }}
-        />
+      <div className="min-h-[80vh] bg-linear-to-br from-slate-50 via-amber-50/20 to-orange-50/30">
+        <div className="container mx-auto px-4 py-12">
+          <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h1 className="text-4xl font-bold text-slate-900">Your Subscriptions</h1>
+              <p className="mt-2 text-slate-600">
+                Manage your monthly coffee plans, billing dates, and invoices.
+              </p>
+            </div>
+            <Link href="/subscriptions/plans">
+              <Button className="bg-amber-600 hover:bg-amber-700">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Subscription
+              </Button>
+            </Link>
+          </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-center space-y-4"
-          >
-            <motion.div
-              className="flex items-center justify-center gap-3 mb-4"
-              animate={{ rotate: [0, 5, -5, 0] }}
-              transition={{ duration: 3, repeat: Infinity }}
-            >
-              <Coffee className="size-10" />
-              <h1 className="text-4xl md:text-5xl font-bold">Your Subscriptions</h1>
-            </motion.div>
-            <p className="text-amber-100/90 text-lg max-w-2xl mx-auto">
-              Manage all your coffee subscriptions in one place. View upcoming shipments, skip months, and adjust your preferences anytime.
-            </p>
-          </motion.div>
-
-          {/* Stats cards */}
-          <motion.div
-            className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4"
-            variants={{
-              hidden: { opacity: 0 },
-              visible: {
-                opacity: 1,
-                transition: {
-                  staggerChildren: 0.1,
-                  delayChildren: 0.4,
-                },
-              },
-            }}
-            initial="hidden"
-            animate="visible"
-          >
-            {[
-              { number: USER_SUBSCRIPTIONS.length, label: 'Active Plans' },
-              {
-                number: USER_SUBSCRIPTIONS.reduce((sum, sub) => sum + sub.coffeeQuantity, 0),
-                label: 'Bags/Month',
-              },
-              {
-                number: `$${USER_SUBSCRIPTIONS.reduce((sum, sub) => sum + sub.price, 0).toFixed(2)}`,
-                label: 'Monthly Cost',
-              },
-              { number: '📦', label: 'Next Shipment' },
-            ].map((stat, idx) => (
-              <motion.div
-                key={idx}
-                className="p-4 rounded-lg bg-white/20 backdrop-blur border border-white/30"
-                variants={{
-                  hidden: { opacity: 0, scale: 0.8 },
-                  visible: {
-                    opacity: 1,
-                    scale: 1,
-                  },
-                }}
-                whileHover={{ scale: 1.05 }}
-              >
-                <div className="text-2xl font-bold text-white">{stat.number}</div>
-                <div className="text-xs text-amber-100/90 font-medium">{stat.label}</div>
-              </motion.div>
-            ))}
-          </motion.div>
+          {loading ? (
+            <div className="py-16 text-center text-slate-600">Loading subscriptions...</div>
+          ) : error ? (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
+              <p className="font-semibold">Unable to load subscriptions</p>
+              <p className="text-sm">{error}</p>
+            </div>
+          ) : subscriptions.length === 0 ? (
+            <Card>
+              <CardContent className="py-16 text-center">
+                <Coffee className="mx-auto mb-4 h-16 w-16 text-slate-300" />
+                <h2 className="text-2xl font-semibold text-slate-900">No active subscriptions</h2>
+                <p className="mt-2 text-slate-600">
+                  Choose a monthly box to start recurring deliveries.
+                </p>
+                <Link href="/subscriptions/plans" className="mt-6 inline-block">
+                  <Button className="bg-amber-600 hover:bg-amber-700">Browse Plans</Button>
+                </Link>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2">
+              {subscriptions.map((subscription) => (
+                <Card key={subscription.subscription_id} className="border-slate-200 shadow-sm">
+                  <CardHeader>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <CardTitle>{subscription.plan?.plan_name || 'Subscription Plan'}</CardTitle>
+                        <CardDescription className="mt-1">
+                          {subscription.plan?.description || 'Monthly recurring plan'}
+                        </CardDescription>
+                      </div>
+                      <Badge className={statusColors[subscription.subscription_status] || ''}>
+                        {subscription.subscription_status}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="rounded-lg bg-slate-50 p-4">
+                        <p className="text-slate-500">Price</p>
+                        <p className="text-xl font-semibold text-slate-900">
+                          ${Number(subscription.plan?.price || 0).toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="rounded-lg bg-slate-50 p-4">
+                        <p className="text-slate-500">Next Billing</p>
+                        <p className="flex items-center gap-2 text-slate-900">
+                          <Calendar className="h-4 w-4 text-amber-600" />
+                          {format(new Date(subscription.next_billing_date), 'MMM d, yyyy')}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-sm text-slate-600">
+                      <span>
+                        Skipped months: {subscription.skipped_months}/
+                        {subscription.plan?.max_skip_per_year || 0}
+                      </span>
+                      <Link href={`/subscriptions/${subscription.subscription_id}`}>
+                        <Button variant="outline" size="sm">
+                          View Details
+                        </Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
-      </motion.div>
-
-      {/* Main content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        {USER_SUBSCRIPTIONS.length > 0 ? (
-          <>
-            {/* Active subscriptions */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="mb-12"
-            >
-              <div className="flex items-center justify-between mb-8">
-                <div className="space-y-2">
-                  <h2 className="text-3xl font-bold flex items-center gap-2 text-slate-900">
-                    <motion.div
-                      animate={{ rotate: [0, -10, 10, 0] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                    >
-                      <TrendingUp className="text-emerald-600" />
-                    </motion.div>
-                    Your Active Subscriptions
-                  </h2>
-                  <p className="text-slate-600">
-                    {USER_SUBSCRIPTIONS.length} subscription{USER_SUBSCRIPTIONS.length !== 1 ? 's' : ''}
-                  </p>
-                </div>
-
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Link href="/subscriptions/plans">
-                    <Button className="bg-linear-to-r from-stone-700 to-amber-700 text-amber-50 px-6 py-3 rounded-lg hover:shadow-lg">
-                      <Plus className="mr-2 size-5" />
-                      Add New Plan
-                    </Button>
-                  </Link>
-                </motion.div>
-              </div>
-
-              {/* Subscriptions grid */}
-              <motion.div
-                className="grid md:grid-cols-2 gap-8"
-                variants={{
-                  hidden: { opacity: 0 },
-                  visible: {
-                    opacity: 1,
-                    transition: {
-                      staggerChildren: 0.15,
-                      delayChildren: 0.4,
-                    },
-                  },
-                }}
-                initial="hidden"
-                animate="visible"
-              >
-                {USER_SUBSCRIPTIONS.map((subscription) => (
-                  <SubscriptionDetailsCard
-                    key={subscription.subscription_id}
-                    subscription={subscription}
-                  />
-                ))}
-              </motion.div>
-            </motion.div>
-
-            {/* Benefits section */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="mt-16 p-8 bg-linear-to-r from-stone-100 to-amber-100 rounded-2xl border-2 border-amber-200"
-            >
-              <h3 className="text-2xl font-bold text-stone-900 mb-6">Member Benefits</h3>
-              <div className="grid md:grid-cols-2 gap-6">
-                {[
-                  {
-                    icon: '🚚',
-                    title: 'Free Priority Shipping',
-                    desc: 'On all subscription boxes',
-                  },
-                  {
-                    icon: '💰',
-                    title: 'Save 20-30%',
-                    desc: 'Compared to retail prices',
-                  },
-                  {
-                    icon: '🎁',
-                    title: 'Exclusive Perks',
-                    desc: 'Early access to new roasts',
-                  },
-                  {
-                    icon: '⏸️',
-                    title: 'Full Control',
-                    desc: 'Skip, pause, or change anytime',
-                  },
-                ].map((benefit, idx) => (
-                  <motion.div
-                    key={idx}
-                    className="p-4 rounded-lg bg-white/50 backdrop-blur"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.6 + idx * 0.1 }}
-                    whileHover={{ scale: 1.05 }}
-                  >
-                    <div className="text-3xl mb-2">{benefit.icon}</div>
-                    <h4 className="font-bold text-stone-900">{benefit.title}</h4>
-                    <p className="text-sm text-stone-700">{benefit.desc}</p>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          </>
-        ) : (
-          /* Empty state */
-          <motion.div
-            variants={noSubscriptionsVariants}
-            initial="hidden"
-            animate="visible"
-            className="text-center py-20"
-          >
-            <motion.div
-              className="mb-8 flex justify-center"
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              <Coffee className="size-24 text-slate-300" />
-            </motion.div>
-            <h3 className="text-3xl font-bold text-slate-900 mb-2">No Active Subscriptions</h3>
-            <p className="text-slate-600 mb-8 max-w-md mx-auto">
-              Start your coffee journey today. Choose from our amazing subscription plans and get
-              fresh, roasted coffee delivered to your door every month.
-            </p>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link href="/subscriptions/plans">
-                <Button className="bg-linear-to-r from-stone-700 to-amber-700 text-amber-50 px-8 py-6 text-base font-bold rounded-lg hover:shadow-lg">
-                  <Coffee className="mr-2 size-5" />
-                  Explore Subscription Plans
-                </Button>
-              </Link>
-            </motion.div>
-          </motion.div>
-        )}
       </div>
-    </motion.div>
-    <Footer />
-  </>
+      <Footer />
+    </>
   );
 }

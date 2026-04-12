@@ -9,6 +9,9 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_BACKEND_URL: ${{ vars.NEXT_PUBLIC_BACKEND_URL_STAGING }}
+      NEXT_PUBLIC_APP_URL: ${{ vars.NEXT_PUBLIC_APP_URL_STAGING }}
 
     defaults:
       run:
@@ -25,6 +28,11 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Validate frontend build environment
+        run: |
+          test -n "$NEXT_PUBLIC_BACKEND_URL" || (echo "NEXT_PUBLIC_BACKEND_URL_STAGING is not set in GitHub Actions variables" && exit 1)
+          test -n "$NEXT_PUBLIC_APP_URL" || (echo "NEXT_PUBLIC_APP_URL_STAGING is not set in GitHub Actions variables" && exit 1)
 
       - name: Build app
         run: npm run build

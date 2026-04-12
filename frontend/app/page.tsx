@@ -10,6 +10,8 @@ import { Star, Utensils, Coffee, ChevronLeft, ChevronRight } from 'lucide-react'
 import { listProducts } from '@/lib/server-data'
 import type { Product } from '@/lib/types'
 
+export const dynamic = 'force-dynamic'
+
 export default async function Home() {
   // Lấy dữ liệu thật từ Database (Code của nhánh main)
   const products = await listProducts()

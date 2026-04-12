@@ -1,0 +1,43 @@
+name: Backend CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/*'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-smoke:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm install
+      - run: npm run build
+      - run: |
+          SKIP_DB_INIT=true SKIP_SCHEDULER_INIT=true PORT=5050 npm start > backend-smoke.log 2>&1 &
+          APP_PID=$!
+          trap "kill $APP_PID" EXIT
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:5050/health >/dev/null; then
+              BACKEND_SMOKE_URL=http://127.0.0.1:5050 npm run smoke
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Backend did not become healthy in time"
+          cat backend-smoke.log || true
+          exit 1

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 
 import { getPool, sql } from '@/lib/db'
+import { signAuthToken } from '@/lib/auth-token'
 
 export const runtime = 'nodejs'
 
@@ -67,15 +68,21 @@ export async function POST(request: Request) {
 
     const createdUser = result.recordset[0]
 
+    const authUser = {
+      id: createdUser.user_id,
+      email: createdUser.email,
+      name: [createdUser.first_name, createdUser.last_name]
+        .filter(Boolean)
+        .join(' ')
+        .trim(),
+      username: createdUser.username,
+      role: 'user' as const,
+    }
+
     return NextResponse.json(
       {
-        id: createdUser.user_id,
-        email: createdUser.email,
-        name: [createdUser.first_name, createdUser.last_name]
-          .filter(Boolean)
-          .join(' ')
-          .trim(),
-        username: createdUser.username,
+        ...authUser,
+        token: signAuthToken(authUser),
       },
       { status: 201 },
     )

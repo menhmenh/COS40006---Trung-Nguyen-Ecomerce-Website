@@ -277,9 +277,7 @@ export default function SubscriptionManagementTab({ userId }: SubscriptionManage
                 )}
 
                 <Button asChild variant="outline" size="sm">
-                  <a href={`/subscriptions/${subscription.subscription_id}/invoices`}>
-                    View Invoices
-                  </a>
+                  <a href={`/subscriptions/${subscription.subscription_id}`}>View Details</a>
                 </Button>
               </div>
             </CardContent>

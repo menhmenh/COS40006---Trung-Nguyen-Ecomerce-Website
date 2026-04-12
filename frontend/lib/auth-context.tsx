@@ -1,12 +1,21 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
+import {
+  clearStoredSession,
+  getStoredSession,
+  persistSession,
+  type AuthSession,
+} from '@/lib/auth-session'
 
 interface User {
   id: string
   email: string
   name: string
   role?: 'admin' | 'user'
+  username?: string
+  points?: number
+  tier?: string
 }
 
 type AuthResult = {
@@ -16,6 +25,7 @@ type AuthResult = {
 
 interface AuthContextType {
   user: User | null
+  token: string | null
   login: (email: string, password: string) => Promise<AuthResult>
   register: (email: string, password: string, name: string) => Promise<AuthResult>
   logout: () => void
@@ -33,18 +43,15 @@ function withUserRole(user: User): User {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
+  const [token, setToken] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user')
+    const storedSession = getStoredSession()
 
-    if (storedUser) {
-      try {
-        setUser(withUserRole(JSON.parse(storedUser) as User))
-      } catch (error) {
-        console.error('[v0] Failed to parse stored user:', error)
-        localStorage.removeItem('user')
-      }
+    if (storedSession) {
+      setUser(withUserRole(storedSession.user))
+      setToken(storedSession.token)
     }
 
     setIsLoading(false)
@@ -61,9 +68,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await response.json().catch(() => ({}))
 
       if (response.ok) {
-        const userData = withUserRole(data as User)
+        const sessionData = data as AuthSession
+        const userData = withUserRole(sessionData.user || (sessionData as unknown as User))
         setUser(userData)
-        localStorage.setItem('user', JSON.stringify(userData))
+        setToken(sessionData.token)
+        persistSession({
+          token: sessionData.token,
+          user: userData,
+        })
         return { success: true }
       }
 
@@ -95,9 +107,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await response.json().catch(() => ({}))
 
       if (response.ok) {
-        const userData = withUserRole(data as User)
+        const sessionData = data as AuthSession
+        const userData = withUserRole(sessionData.user || (sessionData as unknown as User))
         setUser(userData)
-        localStorage.setItem('user', JSON.stringify(userData))
+        setToken(sessionData.token)
+        persistSession({
+          token: sessionData.token,
+          user: userData,
+        })
         return { success: true }
       }
 
@@ -116,12 +133,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setUser(null)
-    localStorage.removeItem('user')
+    setToken(null)
+    clearStoredSession()
     localStorage.removeItem('cart')
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, register, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   )

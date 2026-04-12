@@ -6,6 +6,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { fetchBackend, parseBackendResponse } from '@/lib/backend-api';
 import {
   Card,
   CardContent,
@@ -48,21 +49,8 @@ export default function PaymentMethodsTab({ userId }: PaymentMethodsTabProps) {
     const fetchPaymentMethods = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/payments/methods', {
-          headers: {
-            'x-user-id': userId,
-          },
-        });
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            setPaymentMethods([]);
-            return;
-          }
-          throw new Error(`Failed to fetch payment methods: ${response.statusText}`);
-        }
-
-        const data = await response.json();
+        const response = await fetchBackend('/api/payments/payment-methods');
+        const data = await parseBackendResponse<{ data: PaymentMethod[] }>(response);
         setPaymentMethods(data.data || []);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
@@ -78,12 +66,9 @@ export default function PaymentMethodsTab({ userId }: PaymentMethodsTabProps) {
 
   const handleDeletePaymentMethod = async (paymentMethodId: string) => {
     try {
-      const response = await fetch(
-        `/api/payments/methods/${paymentMethodId}`,
-        {
-          method: 'DELETE',
-        }
-      );
+      const response = await fetchBackend(`/api/payments/payment-methods/${paymentMethodId}`, {
+        method: 'DELETE',
+      });
 
       if (!response.ok) {
         throw new Error('Failed to delete payment method');
@@ -101,11 +86,11 @@ export default function PaymentMethodsTab({ userId }: PaymentMethodsTabProps) {
 
   const handleSetDefault = async (paymentMethodId: string) => {
     try {
-      const response = await fetch(
-        `/api/payments/methods/${paymentMethodId}/default`,
+      const response = await fetchBackend(
+        `/api/payments/payment-methods/${paymentMethodId}/default`,
         {
           method: 'PUT',
-        }
+        },
       );
 
       if (!response.ok) {
@@ -147,23 +132,26 @@ export default function PaymentMethodsTab({ userId }: PaymentMethodsTabProps) {
 
   return (
     <div className="space-y-6">
-      {/* Add Payment Method Button */}
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold">Payment Methods</h2>
-        <Button asChild className="bg-amber-600 hover:bg-amber-700">
-          <a href="/account/add-payment-method">Add Payment Method</a>
+        <Button disabled className="bg-amber-600 hover:bg-amber-700 disabled:opacity-60">
+          Add Payment Method
         </Button>
       </div>
+      <p className="text-sm text-gray-600">
+        Payment method onboarding UI is not wired yet. Existing Stripe methods can still be listed,
+        set as default, and removed.
+      </p>
 
       {paymentMethods.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <CreditCard className="mx-auto h-16 w-16 text-gray-300 mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No Payment Methods</h3>
-            <p className="text-gray-600 mb-6">Add a payment method to enable subscriptions</p>
-            <Button asChild className="bg-amber-600 hover:bg-amber-700">
-              <a href="/account/add-payment-method">Add Payment Method</a>
-            </Button>
+            <p className="text-gray-600 mb-6">
+              Add payment methods from the backend/Stripe integration until the frontend onboarding
+              form is implemented.
+            </p>
           </CardContent>
         </Card>
       ) : (

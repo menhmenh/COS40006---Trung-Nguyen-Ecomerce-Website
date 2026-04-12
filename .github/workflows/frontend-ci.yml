@@ -4,16 +4,19 @@ on:
   push:
     branches:
       - main
-      - "feature/*"
+      - 'feature/*'
   pull_request:
     branches:
       - main
   workflow_dispatch:
 
 jobs:
-  build:
+  build-and-smoke:
     runs-on: ubuntu-latest
-    # Thêm 3 dòng dưới đây để chỉ đường cho GitHub Actions
+    env:
+      NEXT_PUBLIC_BACKEND_URL: ${{ vars.NEXT_PUBLIC_BACKEND_URL_STAGING }}
+      NEXT_PUBLIC_APP_URL: ${{ vars.NEXT_PUBLIC_APP_URL_STAGING }}
+
     defaults:
       run:
         working-directory: ./frontend
@@ -26,4 +29,21 @@ jobs:
           node-version: 20
 
       - run: npm install
+      - run: |
+          test -n "$NEXT_PUBLIC_BACKEND_URL" || (echo "NEXT_PUBLIC_BACKEND_URL_STAGING is not set in GitHub Actions variables" && exit 1)
+          test -n "$NEXT_PUBLIC_APP_URL" || (echo "NEXT_PUBLIC_APP_URL_STAGING is not set in GitHub Actions variables" && exit 1)
       - run: npm run build
+      - run: |
+          npm run start -- --port 3100 > frontend-smoke.log 2>&1 &
+          APP_PID=$!
+          trap "kill $APP_PID" EXIT
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:3100/login >/dev/null; then
+              FRONTEND_SMOKE_URL=http://127.0.0.1:3100 npm run smoke
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Frontend did not become ready in time"
+          cat frontend-smoke.log || true
+          exit 1
