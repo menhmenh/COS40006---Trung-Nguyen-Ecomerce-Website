@@ -11,21 +11,48 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('') // Thêm state để hiển thị lỗi nếu API tạch
   const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setErrorMessage('') // Reset lỗi mỗi lần bấm
 
-    // Giả lập gọi API gửi email reset
-    setTimeout(() => {
-      setIsLoading(false)
-      setIsSubmitted(true)
-      toast({
-        title: "Email sent",
-        description: "Check your inbox for the password reset link.",
+    try {
+      console.log("🚀 ĐÃ BẤM NÚT SUBMIT - GỌI API THẬT!")
+      
+      // GỌI API XUỐNG SERVER THẬT SỰ Ở ĐÂY
+      const response = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
       })
-    }, 1500)
+
+      const data = await response.json()
+
+      if (response.ok) {
+        // Nếu Server báo gửi mail thành công
+        setIsSubmitted(true)
+        toast({
+          title: "Email sent",
+          description: "Check your inbox for the password reset link.",
+        })
+      } else {
+        // Nếu có lỗi (email ko tồn tại, lỗi Resend...)
+        setErrorMessage(data.error || 'Đã có lỗi xảy ra.')
+        toast({
+          variant: "destructive",
+          title: "Lỗi",
+          description: data.error || 'Đã có lỗi xảy ra.',
+        })
+      }
+    } catch (error) {
+      console.error("❌ Lỗi kết nối:", error)
+      setErrorMessage('Lỗi kết nối đến máy chủ. Vui lòng thử lại sau.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -46,7 +73,7 @@ export default function ForgotPasswordPage() {
             </Link>
           </div>
         ) : (
-          // Form nhập email (Giống ảnh mẫu)
+          // Form nhập email
           <>
             <div className="space-y-4 text-gray-600">
               <p>
@@ -61,7 +88,7 @@ export default function ForgotPasswordPage() {
                 </Label>
                 <Input 
                   id="reset-email" 
-                  type="text" 
+                  type="email" // Chuyển type thành email để check format cho chuẩn
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="h-12 border-gray-300 rounded-sm focus:ring-black w-full"
@@ -69,10 +96,17 @@ export default function ForgotPasswordPage() {
                 />
               </div>
 
+              {/* Bảng báo lỗi nếu nhập bậy bạ */}
+              {errorMessage && (
+                <div className="text-red-500 text-sm font-medium">
+                  {errorMessage}
+                </div>
+              )}
+
               <div className="pt-2">
                 <Button 
                   type="submit" 
-                  disabled={isLoading}
+                  disabled={isLoading || !email}
                   className="bg-black hover:bg-gray-800 text-white font-bold uppercase py-6 px-8 rounded-sm text-sm tracking-wider"
                 >
                   {isLoading ? 'Sending...' : 'Reset password'}
