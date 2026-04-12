@@ -3,12 +3,16 @@ import { Resend } from 'resend'
 import crypto from 'crypto'
 import { getPool } from '@/lib/db'
 
-// Khởi tạo Resend với API Key mới
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 export async function POST(req: Request) {
   console.log("🔥 ĐÃ CHẠY VÀO API FORGOT PASSWORD THÀNH CÔNG!!! 🔥")
   try {
+    const resendApiKey = process.env.RESEND_API_KEY
+    if (!resendApiKey) {
+      console.error('Missing RESEND_API_KEY')
+      return NextResponse.json({ error: 'Email service is not configured.' }, { status: 500 })
+    }
+
+    const resend = new Resend(resendApiKey)
     const { email } = await req.json()
     const pool = await getPool()
 

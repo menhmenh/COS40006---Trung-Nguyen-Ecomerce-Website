@@ -1,7 +1,7 @@
+import 'dotenv/config';
 import express, { Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import dotenv from 'dotenv';
 import { initializeDatabase } from './config/database';
 import { handleErrors } from './middleware/auth.middleware';
 import subscriptionRoutes from './routes/subscription.routes';
@@ -9,9 +9,6 @@ import adminSubscriptionRoutes from './routes/admin-subscription.routes';
 import paymentRoutes from './routes/payment.routes';
 import invoiceRoutes from './routes/invoice.routes';
 import { billingScheduler } from './services/billing-scheduler.service';
-
-// Load environment variables
-dotenv.config();
 
 const app: Express = express();
 const PORT = process.env.PORT || 5000;

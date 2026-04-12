@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 
-import { getPool, sql } from '@/lib/db'
+import { getPool } from '@/lib/db'
 
 export const runtime = 'nodejs'
 
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
 
     const existing = await pool
       .request()
-      .input('email', sql.VarChar(255), email)
+      .input('email', email)
       .query('SELECT TOP 1 user_id FROM users WHERE email = @email')
 
     if (existing.recordset.length > 0) {
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     const baseUsername = email.split('@')[0]
     const usernameCheck = await pool
       .request()
-      .input('username', sql.VarChar(100), baseUsername)
+      .input('username', baseUsername)
       .query('SELECT COUNT(*) AS total FROM users WHERE username = @username')
 
     const username =
@@ -41,11 +41,11 @@ export async function POST(request: Request) {
 
     const result = await pool
       .request()
-      .input('username', sql.VarChar(100), username)
-      .input('email', sql.VarChar(255), email)
-      .input('first_name', sql.VarChar(100), firstName || null)
-      .input('last_name', sql.VarChar(100), lastName || null)
-      .input('password_hash', sql.VarChar(255), passwordHash)
+      .input('username', username)
+      .input('email', email)
+      .input('first_name', firstName || null)
+      .input('last_name', lastName || null)
+      .input('password_hash', passwordHash)
       .query(`
         INSERT INTO users (
           user_id, username, email, first_name, last_name,

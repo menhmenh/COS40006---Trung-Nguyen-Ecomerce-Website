@@ -28,7 +28,6 @@ type ProductRow = {
 type CategoryRow = {
   id: string
   name: string
-  description: string | null
 }
 
 type OrderHeaderRow = {
@@ -68,6 +67,22 @@ type ProductInput = {
   image?: string
 }
 
+const STORAGE_ENDPOINT = (process.env.NEXT_PUBLIC_STORAGE_ENDPOINT || '').trim().replace(/\/$/, '')
+const STORAGE_BUCKET = (process.env.NEXT_PUBLIC_STORAGE || 'product').trim()
+
+function getStoragePublicBase(endpoint: string) {
+  if (!endpoint) return ''
+  if (endpoint.endsWith('/storage/v1/s3')) {
+    return endpoint.replace(/\/storage\/v1\/s3$/, '/storage/v1/object/public')
+  }
+  if (endpoint.endsWith('/storage/v1/object/public')) {
+    return endpoint
+  }
+  return `${endpoint}/storage/v1/object/public`
+}
+
+const STORAGE_PUBLIC_BASE = getStoragePublicBase(STORAGE_ENDPOINT)
+
 // --- HELPERS ---
 
 function slugify(value: string) {
@@ -85,6 +100,32 @@ function normalizeOrderStatus(status?: string | null): OrderStatus {
   return validStatuses.includes(normalized as OrderStatus) ? (normalized as OrderStatus) : 'pending'
 }
 
+function mapImageUrl(image?: string | null) {
+  const value = image?.trim()
+  if (!value) return '/placeholder.svg'
+  if (value === '/placeholder.svg') {
+    return value
+  }
+
+  if (value.startsWith('http://') || value.startsWith('https://')) {
+    return value
+  }
+
+  const normalizedPath = value.replace(/^\/+/, '')
+
+  if (!STORAGE_PUBLIC_BASE || !STORAGE_BUCKET) {
+    return `/${normalizedPath}`
+  }
+
+  const safePath = normalizedPath
+    .split('/')
+    .filter(Boolean)
+    .map((segment) => encodeURIComponent(segment))
+    .join('/')
+
+  return `${STORAGE_PUBLIC_BASE}/${encodeURIComponent(STORAGE_BUCKET)}/${safePath}`
+}
+
 // --- MAPPING LOGIC ---
 
 function mapCategory(row: CategoryRow): Category {
@@ -92,19 +133,12 @@ function mapCategory(row: CategoryRow): Category {
     id: row.id,
     name: row.name,
     slug: slugify(row.name),
-    description: row.description,
   }
 }
 
 function mapProduct(row: ProductRow): Product {
   const categoryName = row.categoryName || 'Uncategorized'
   const stock = Number(row.stock || 0)
-
-  // LOGIC ẢNH: Tự động sửa đường dẫn nếu thiếu dấu /
-  let finalImage = row.image || '/placeholder.svg'
-  if (finalImage !== '/placeholder.svg' && !finalImage.startsWith('/') && !finalImage.startsWith('http')) {
-    finalImage = `/${finalImage}`
-  }
 
   return {
     id: row.id,
@@ -115,7 +149,7 @@ function mapProduct(row: ProductRow): Product {
     price: Number(row.price || 0),
     stock,
     description: row.description || '',
-    image: finalImage,
+    image: mapImageUrl(row.image),
     badge: stock > 0 ? undefined : 'Sold Out',
     rating: Number(row.rating || 0),
     reviews: Number(row.reviews || 0),
@@ -174,7 +208,7 @@ async function getOrderItems(orderId: string): Promise<OrderItem[]> {
     productName: row.productName || 'Unknown Product',
     price: Number(row.price || 0),
     quantity: Number(row.quantity || 0),
-    image: row.image && !row.image.startsWith('/') ? `/${row.image}` : (row.image || '/placeholder.svg'),
+    image: mapImageUrl(row.image),
   }))
 }
 
@@ -210,7 +244,7 @@ async function hydrateOrders(rows: OrderHeaderRow[]) {
 
 export async function listCategories() {
   const pool = await getPool()
-  const result = await pool.request().query(`SELECT category_id AS id, name, description FROM categories ORDER BY name`)
+  const result = await pool.request().query(`SELECT category_id AS id, name FROM categories ORDER BY name`)
   return result.recordset.map((row: CategoryRow) => mapCategory(row))
 }
 

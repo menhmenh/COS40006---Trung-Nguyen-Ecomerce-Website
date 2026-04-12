@@ -13,7 +13,6 @@ const config: sql.config = {
   },
   options: {
     trustServerCertificate: true,
-    enableKeepAlive: true,
   },
 };
 

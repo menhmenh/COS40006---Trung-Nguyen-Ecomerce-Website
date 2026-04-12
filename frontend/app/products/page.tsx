@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { ProductCard } from '@/components/product-card'
 import { CategorySidebar } from '@/components/category-sidebar'
-import { products, categories } from '@/lib/store'
+import type { Category, Product } from '@/lib/types'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -20,9 +20,47 @@ export default function ProductsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [sortBy, setSortBy] = useState('featured')
+  const [categories, setCategories] = useState<Category[]>([])
+  const [products, setProducts] = useState<Product[]>([])
+
+  useEffect(() => {
+    let isMounted = true
+
+    const fetchData = async () => {
+      try {
+        const [categoriesRes, productsRes] = await Promise.all([
+          fetch('/api/categories', { cache: 'no-store' }),
+          fetch('/api/products', { cache: 'no-store' }),
+        ])
+
+        if (!categoriesRes.ok || !productsRes.ok) return
+
+        const categoriesData = await categoriesRes.json()
+        const productsData = await productsRes.json()
+
+        if (!isMounted) return
+
+        if (Array.isArray(categoriesData)) {
+          setCategories(categoriesData)
+        }
+        if (Array.isArray(productsData)) {
+          setProducts(productsData)
+        }
+      } catch {
+        // Keep empty lists if API is unavailable.
+      }
+    }
+
+    fetchData()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const filteredProducts = useMemo(() => {
     let result = [...products]
+    const normalizedCategory = selectedCategory.trim()
 
     // Filter by search
     if (searchQuery) {
@@ -33,8 +71,8 @@ export default function ProductsPage() {
     }
 
     // Filter by category (check both parent and child categories)
-    if (selectedCategory !== 'all') {
-      result = result.filter((product) => product.category === selectedCategory)
+    if (normalizedCategory && normalizedCategory !== 'all') {
+      result = result.filter((product) => product.category === normalizedCategory)
     }
 
     // Sort
@@ -61,7 +99,7 @@ export default function ProductsPage() {
     }
 
     return result
-  }, [searchQuery, selectedCategory, sortBy])
+  }, [products, searchQuery, selectedCategory, sortBy])
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -128,7 +166,7 @@ export default function ProductsPage() {
               {/* Products Grid */}
               {filteredProducts.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                  {filteredProducts.map((product:any) => (
+                  {filteredProducts.map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}
                 </div>
