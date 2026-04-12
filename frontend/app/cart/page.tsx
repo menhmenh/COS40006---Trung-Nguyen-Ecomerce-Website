@@ -19,10 +19,10 @@ export default function CartPage() {
       <div className="min-h-screen flex flex-col">
         <Header />
         <div className="flex-1 container mx-auto px-4 py-16 text-center mt-12">
-          <h1 className="text-3xl font-bold mb-4">Giỏ hàng của bạn trống</h1>
-          <p className="text-muted-foreground mb-8">Có vẻ như bạn chưa thêm sản phẩm nào.</p>
+          <h1 className="text-3xl font-bold mb-4">Your cart is empty</h1>
+          <p className="text-muted-foreground mb-8">It seems like you don't have any item in your cart</p>
           <Link href="/products">
-            <Button className="rounded-full px-8 py-6 text-lg">MUA CÀ PHÊ</Button>
+            <Button className="rounded-full px-8 py-6 text-lg">Buy Coffee</Button>
           </Link>
         </div>
         <Footer />

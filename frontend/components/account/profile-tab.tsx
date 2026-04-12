@@ -17,6 +17,9 @@ export default function ProfileTab({ user }: any) {
   const currentTier = user.tier || 'Silver'
   const currentPoints = user.points || 0
 
+  // Logic kiểm tra tài khoản Admin
+  const isAdmin = user?.role === 'admin' || user?.email === 'admin.demo@trungnguyen.com'
+
   return (
     <div className="max-w-2xl rounded-2xl bg-muted p-8">
       <div className="mb-8 flex items-center gap-4">
@@ -28,11 +31,13 @@ export default function ProfileTab({ user }: any) {
           <h2 className="text-xl font-bold">{user.name}</h2>
           <p className="text-muted-foreground">{user.email}</p>
           
-          {/* HUY HIỆU ĐIỂM THÀNH VIÊN HIỂN THỊ Ở ĐÂY */}
-          <div className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-semibold shadow-sm ${getTierBadgeStyle(currentTier)}`}>
-            <Award size={16} />
-            {currentTier} Member • {currentPoints.toLocaleString()} pts
-          </div>
+          {/* CHỈ HIỆN HUY HIỆU NẾU KHÔNG PHẢI LÀ ADMIN */}
+          {!isAdmin && (
+            <div className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-semibold shadow-sm ${getTierBadgeStyle(currentTier)}`}>
+              <Award size={16} />
+              {currentTier} Member • {currentPoints.toLocaleString()} pts
+            </div>
+          )}
         </div>
       </div>
 
@@ -52,16 +57,20 @@ export default function ProfileTab({ user }: any) {
           <span className="font-medium">{user.email}</span>
         </div>
 
-        {/* THÊM THÔNG TIN ĐIỂM VÀO BẢNG CHI TIẾT */}
-        <div className="flex justify-between border-b pb-2">
-          <span className="text-muted-foreground">Loyalty Tier</span>
-          <span className="font-medium">{currentTier}</span>
-        </div>
+        {/* CHỈ HIỆN THÔNG TIN ĐIỂM NẾU KHÔNG PHẢI LÀ ADMIN */}
+        {!isAdmin && (
+          <>
+            <div className="flex justify-between border-b pb-2">
+              <span className="text-muted-foreground">Loyalty Tier</span>
+              <span className="font-medium">{currentTier}</span>
+            </div>
 
-        <div className="flex justify-between border-b pb-2">
-          <span className="text-muted-foreground">Reward Points</span>
-          <span className="font-medium">{currentPoints.toLocaleString()}</span>
-        </div>
+            <div className="flex justify-between border-b pb-2">
+              <span className="text-muted-foreground">Reward Points</span>
+              <span className="font-medium">{currentPoints.toLocaleString()}</span>
+            </div>
+          </>
+        )}
 
         <div className="flex justify-between border-b pb-2">
           <span className="text-muted-foreground">User ID</span>

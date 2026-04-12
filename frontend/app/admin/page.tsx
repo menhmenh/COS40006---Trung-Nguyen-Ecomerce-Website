@@ -1,25 +1,37 @@
 'use client'
 
+import Link from 'next/link'
 import Footer from '@/components/footer'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import ProductManagement from '@/components/admin/product-management'
 import OrderManagement from '@/components/admin/order-management'
-import { Shield } from 'lucide-react'
+import { Shield, ArrowLeft } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 export default function AdminDashboard() {
   return (
     <div className="min-h-screen flex flex-col bg-[#F3F4F5]">
-    
-      
       <main className="flex-1 container mx-auto px-4 py-12">
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 rounded-full bg-[#1B1B1D] flex items-center justify-center">
-              <Shield className="w-6 h-6 text-white" />
+        
+        {/* Phần Header của Admin có thêm nút Back */}
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 rounded-full bg-[#1B1B1D] flex items-center justify-center">
+                <Shield className="w-6 h-6 text-white" />
+              </div>
+              <h1 className="text-4xl font-bold text-[#1B1B1D]">{'Admin Dashboard'}</h1>
             </div>
-            <h1 className="text-4xl font-bold text-[#1B1B1D]">{'Admin Dashboard'}</h1>
+            <p className="text-[#64646A] text-lg">{'Manage your coffee products and orders'}</p>
           </div>
-          <p className="text-[#64646A] text-lg">{'Manage your coffee products and orders'}</p>
+
+          {/* Nút quay về My Account */}
+          <Link href="/account">
+            <Button variant="outline" className="gap-2 rounded-full bg-white hover:bg-gray-50 border-gray-300">
+              <ArrowLeft className="w-4 h-4" />
+              My Account
+            </Button>
+          </Link>
         </div>
 
         <Tabs defaultValue="products" className="w-full">

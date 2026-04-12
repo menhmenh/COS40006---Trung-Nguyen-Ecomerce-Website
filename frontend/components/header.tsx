@@ -38,9 +38,9 @@ function Header() {
             </div>
           </Link>
 
-          {/* Navigation */}
+          {/* Navigation - Admin sẽ không thấy các mục tích điểm/mua sắm */}
           <nav className="hidden md:flex items-center gap-12">
-            {!isAdmin && (
+            {!isAdmin ? (
               <>
                 <Link href="/products" className="text-sm font-medium hover:text-muted-foreground transition-smooth">
                   Shop Coffee
@@ -53,22 +53,16 @@ function Header() {
                   About Us
                 </Link>
               </>
+            ) : (
+              <span className="text-sm font-bold text-primary uppercase tracking-widest">
+              
+              </span>
             )}
           </nav>
 
           {/* Actions */}
           <div className="flex items-center gap-4 animate-fade-in-right">
             
-            {/* Nút Admin Dashboard chỉ hiện cho tài khoản có quyền */}
-            {isAdmin && (
-              <Link href="/admin">
-                <Button variant="default" className="gap-2">
-                  <LayoutDashboard className="h-4 w-4" />
-                  Admin Dashboard
-                </Button>
-              </Link>
-            )}
-
             {/* Giỏ hàng ẩn đi nếu là Admin */}
             {!isAdmin && (
               <Link href="/cart">
@@ -86,22 +80,29 @@ function Header() {
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost" size="icon" className="hover:bg-primary/10 rounded-full">
                     <User className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
-                    <Link href="/account">My Account</Link>
-                  </DropdownMenuItem>
-                  {isAdmin && (
+                <DropdownMenuContent align="end" className="w-56">
+                  
+                  {/* Nếu là Admin, đưa Dashboard lên đầu menu và bỏ lặp ở ngoài */}
+                  {isAdmin ? (
                     <DropdownMenuItem asChild>
-                      <Link href="/admin">Admin Dashboard</Link>
+                      <Link href="/admin" className="cursor-pointer font-bold text-primary">
+                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                        Admin Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem asChild>
+                      <Link href="/account" className="cursor-pointer">My Account</Link>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem onClick={logout}>
+
+                  <DropdownMenuItem onClick={logout} className="text-red-600 cursor-pointer">
                     <LogOut className="mr-2 h-4 w-4" />
-                    Logout
+                    Log out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -113,9 +114,10 @@ function Header() {
               </Link>
             )}
 
+            {/* Nút Voucher ẩn nếu là Admin */}
             {!isAdmin && (
               <Link href="/products">
-                <Button className="rounded-full px-6 hidden md:inline-flex">
+                <Button className="rounded-full px-6 hidden md:inline-flex bg-[#3E2723] hover:bg-[#2A1B18]">
                   BUY GIFT VOUCHERS
                 </Button>
               </Link>
